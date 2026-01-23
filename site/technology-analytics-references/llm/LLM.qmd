@@ -1,0 +1,21 @@
+---
+title: Large Language Model (LLM)
+---
+
+# LLM Articles & Resources
+
+-   [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)
+-   [Open LLM Leaderboard Report](https://github.com/dsdanielpark/Open-LLM-Leaderboard-Report)
+-   [Neo4j Blog: Context-Aware Knowledge Graph Chatbot With GPT-4 and Neo4j](https://neo4j.com/developer-blog/context-aware-knowledge-graph-chatbot-with-gpt-4-and-neo4j/?utm_campaign=Developer+Blog+&utm_content=UI&utm_medium=social&utm_source=LinkedIn&utm_tag=ChatGPT%2CCommunity%2CDevRel&utm_term=Link)
+-   [Medium: Integrate LLM workflows with Knowledge Graph using Neo4j and APOC](https://towardsdatascience.com/integrate-llm-workflows-with-knowledge-graph-using-neo4j-and-apoc-27ef7e9900a2)
+-   [Medium: How to Fine-Tune GPT-3 Model for Named Entity Recognition](https://medium.com/ubiai-nlp/how-to-fine-tune-gpt-3-model-for-named-entity-recognition-4e4460acb924)
+-   [Arxiv Paper: GPT-NER: Named Entity Recognition via Large Language Models](https://arxiv.org/pdf/2304.10428.pdf)
+
+# LLM Packages & Tools
+
+## Tools
+
+-   [Prodigy](https://prodi.gy/): data annotation tool
+-   [Numerous AI](https://numerous.ai/): extract text, categorize, generate formulas, and use ChatGPT right inside your spreadsheet
+-   [GraphGPT](https://github.com/varunshenoy/GraphGPT): converts unstructured natural language into a knowledge graph
+-   [HuggingChat](https://huggingface.co/chat/)

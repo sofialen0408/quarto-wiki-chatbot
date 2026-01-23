@@ -1,0 +1,143 @@
+---
+title: GitHub
+---
+
+# General Resources for Getting Started
+
+### Resources shared by OCIO (in welcome email to new users of developer.nasa.gov)
+
+-   Basic information on developer.nasa.gov (an instance of Enterprise Github set up behind the NASA firewall) can be found [here](https://developer.nasa.gov/pages/OpenInnovation/developer-nasa-gov-splash)
+-   Basic 'how to' information for users on Enterprise Github instances in general can be found [here](https://help.github.com/en/enterprise/2.15/user)
+-   ITAR/EAR material is now allowed on developer.nasa.gov. Users of developer.nasa.gov who wish to store ITAR/EAR information must keep that code in a private repository. Further mandatory instructions, including what to include in your repository can be found [here](https://developer.nasa.gov/meta/repository-resources/blob/master/ITAR-EAR-SOP.qmd)
+-   [GitHub Learning Lab - free hands-on courses](https://lab.github.com/)
+
+### GitHub 101 - Nick's Demo to People Analytics - 7/23/21
+
+-   [NASA GitHub Resources.pptx](https://nasa.sharepoint.com/:p:/t/PeopleAnalyticsBranch/ETbbfkdkEOVLkWXpdDyzGCoB_sC2tfwRcdasESGFVYpKyQ?e=oAfEy4)
+-   [Recording of the Demo - 47min](https://nasa-my.sharepoint.com/:v:/r/personal/cfabell_ndc_nasa_gov/Documents/Recordings/OCHCO%20PA%20Analytics%20Share%20(not%20SharePoint%20-%20Please%20Do%20Not%20Delete)-20210723_125943-Meeting%20Recording.mp4?csf=1&web=1&e=QnkWj9)
+
+### Other Websites
+
+-   [GitHub in 20 min](https://www.youtube.com/watch?v=nhNq2kIvi9s), recommended by Nick
+-   [Git in 15 min](https://www.youtube.com/watch?v=USjZcfj8yxE), recommended by Nick
+-   [Git Cheat Sheet](https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet), recommended by Nick
+-   [GitHub for Project Management](https://www.youtube.com/watch?v=pXRLjACbtYs&t=607s), created by Madison
+-   [Happy Git and GitHub for the useR](https://happygitwithr.com/), recommended by David
+
+# Connecting to GitHub on [RStudio Server](https://rstudio.arc.nasa.gov)
+
+In the Terminal box of RStudio: 1. Create a method to authenticate your identity with NASA's GitHub through SSH Keys (in your home folder) by typing `ssh-keygen` 2. In RStudio, in the home directory, go to the Files box \> More \> (check) Show Hidden Files 3. Open and copy the id_rsa.pub. 4. Go to settings in your GitHub and add SSH key (paste id_rsa.pub) 5. Check authentication by typing:`ssh -T git@developer.nasa.gov` 6. Now you can clone an existing repository. Find the repository on the GitHub website. Click the Green Code button (top right). Copy the SSH string. Now you can clone (ex): `git clone git@developer.nasa.gov:ghwillia/DEIA-Rshiny.git` 7. Later, if you want to get the freshest copy or update, you can pull: `git pull git@developer.nasa.gov:ghwillia/DEIA-Rshiny.git`
+
+# Working with Branches in GitHub in [RStudio Server](https://rstudio.arc.nasa.gov)
+
+For when one or more people are collaborating on code or keeping a "development" version of code (branch) and a "master" or "production" version of code (branch).
+
+*These steps were learned from the following tutorial: (https://www.atlassian.com/git/tutorials/learn-git-with-bitbucket-cloud)*
+
+1.  In your terminal, after you have cloned or pulled the freshest copy of the master branch, type `git branch -a` to see what branch you are on and what branches exist locally and remotely (\* indicates active branch).
+2.  To create your own branch to work on and move into it, type `git branch new_feature_branch` (or name it appropriately).
+3.  Step into that branch by typing: `git checkout new_feature_branch`
+4.  Try making an inconsequential change to the code (like adding a comment in ui.R). Typing <git status> will show where you had modified the code and on what branch.
+5.  To move the changes from the working directory to the staging area type, `git add ui.R`. The staging area is where you prepare a snapshot of a set of changes before committing them to the official history. If you want to add all the changes to all files, type `git add --all`
+6.  Type `git status` to see that the new file has been staged and can be committed when you are ready. `git status` displays the state of the working directory and the staged snapshot.
+7.  Issue the git commit command with a commit message. The -m indicates a commit message follows: `git commit -m 'Initial commit'`. The git commit takes the staged snapshot and commits it to the project history.
+8.  Push the change in your branch to the online repo: `git push origin new_feature_branch`
+9.  In GitHub, go to Pull Requests and click "New pull request". Make sure you are comparing master against the branch you just uploaded. Create a pull request and add a reviewer (your collaborator). After review (if requested), you can merge the code. Or the reviewer can merge your branch with the master branch.
+
+## Reverting to a Previous Commit
+
+Full Tutorial Here: https://www.atlassian.com/git/tutorials/undoing-changes \### To view a previous commit 0. Make sure you are in the branch you want to be in. 1. In the terminal, run `git log--oneline` to see the latest commits. 2. In the terminal, run `git checkout YOURCOMMITHASH`. For ex. `git checkout f52f430` This should change all the associated files in your workspace like magic. You can view and run them in RStudio as usual. To return to the latest state or commit, run `git checkout master`
+
+### To undo a commit
+
+1.  Make sure you have checked out the commit that you'd like to restore (ex: `git checkout f52f430`)
+2.  Run `git checkout -b new_branch_without_crazy_commit`
+3.  Push that commit to the master.
+
+## Q&A
+
+-   How often should you `git pull` from the master branch while working on your own local branch (feature)?
+
+# Using GitHub for Project Management
+
+[Link to Video from People Analytics Share 8-6-2021](https://nasa-my.sharepoint.com/:v:/g/personal/cfabell_ndc_nasa_gov/ESJGtA9ltiRPgiSIXslAHe8BkpaxAmrSOTHNHLW3DjULlg) \> Everything shown can be done through the command line **and** Github Desktop *except* the commit template. \> For this tutorial writeup, everything will be done through the command line.
+
+## Create Repository
+
+1.  Create repository through GitHub browser & copy the URL.
+
+2.  Go to your command line to clone the repository and make your first initialization commit.
+
+    ```         
+    cd projects
+    git clone URL
+    ls (shows the repository has been cloned)
+    cd repo (shows it's empty)
+    vim test.txt (add something)
+    git add --all 
+    git commit -m "test file added"
+    git push --all
+    ```
+
+3.  If you go to the repository through your browser and refresh, you can see that your changes are there now.
+
+## Commit Message Template
+
+> The main reason behind creating and using a commit message template is for team collaboration and streamlined documentation of codebase changes.
+
+1.  Go to your command line to construct the template, configure it, and add it to the repository. Using `git commit` without the `-m` flag will default to using the commit template. You can opt not to use the template by using the `-m` flag.
+
+    ```         
+    vim .gitmessage (construct template)
+        - related issues
+        - related commits
+        - anything commented will not show up on Github
+    git config --global commit.template .gitmessage
+    git add --all
+    git commit (no -m flag)
+    git push --all
+    ```
+
+2.  Check your repository in the broswer (.gitmessage should be in the home directory).
+
+> When you’re working with a team, the individuals who didn’t set this up will need to adopt it by: 1. Pulling changes. 2. Running `git config —global commit.template .gitmessage`.
+
+## Issues
+
+> Issues are useful for tracking bugs, new features, discussion points, and more.
+
+1.  Create an issue, assign it and label it. Later in this tutorial, when we have a project, we'll add the issue to the project.
+2.  You can create your own labels by clicking on the "Labels" button at the top of the "Issues" tab.
+3.  You may also want to create an issue template.
+    1.  Go to Repo \> Settings \> Features section \> check issues \> set up templates \> add template \> custom template.
+    2.  Now when you go to create an issue, you have the option to use an issue template.
+
+## Projects
+
+> Projects are set up like kanban boards to organize tasks. You can add issues to a project board or create tasks in a project board that aren’t really issues.
+
+> Personally I like to use a triage board with the high priority, low priority and closed tasks columns, and use the labels on the issues to filter through tasks.
+
+Set up a board: 1. Create task board with bug triage project template. 2. Organize tasks already created. 3. Alternately, you can add an issue upon creation of the issue using the sidebar on the right. 4. Going to the board after creating a new issue and adding it to the project, you can see it needs to be triaged. 5. If you want, you could add additional columns, e.g. one for "in-progress" tasks.
+
+## Bringing it together
+
+> Let's make a commit that references an issue and a commit to show how these things tie together.
+
+1.  Make sure we pull changes before editing.
+2.  Make a new commit using the template.
+    -   To reference an issue, just use `#1` and indicate the number of the issue.
+    -   To reference a commit, use `1234567`, e.g. the last 7 characters of the commit ID.
+
+```         
+vim test.txt
+    - edit it 
+git add --all
+git commit
+    - Find the number of the issue you want to reference
+    - Find the last 7 characters of the commit id
+git push --all
+```
+
+3.  In the repository through your browser, you can see references 1) through the commit and 2) through the issue.
+4.  If you decide that you're done with a task, you can close an issue. This automatically moves the issue to the "closed" column of the project board.

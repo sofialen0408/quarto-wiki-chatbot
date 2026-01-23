@@ -1,0 +1,133 @@
+---
+title: Learning R
+---
+
+-   Great set of resources to learning R from RStudio: <https://education.rstudio.com/learn/beginner/>
+-   Short, engaging/hands-on videos from rladiessydney: <https://rladiessydney.org/courses/ryouwithme/>
+
+# R Packages & Tools
+
+### [Curated List of Awesome R Packages & Tools](https://github.com/qinwf/awesome-R)
+
+### [R Universe - Package Finder](https://r-universe.dev/search/)
+
+### [Building reproducible analytical pipelines with R](https://raps-with-r.dev/intro.html)
+
+# Cooking R Packages – Recipes
+
+## :sunflower: Motivation
+
+Though, it is easy to simply source R scripts from GitHub, it can be difficult to manage a slew of R files with different functions needing to be sourced for projects. Creating packages and uploading them then sourcing them from GitHub is the best-practice way of creating shareable functions and variables. Many organizations employ this technique (https://emilyriederer.netlify.app/post/resource-roundup-r-industry/). The method below relies heavily upon the work of Hadley Wickham in R Packages (r-pkgs.org), where the packages devtools and usethis are leveraged for package creation.
+
+-   The following recipes are from [Hadley Wickham's "R Packages" book, Ch.2.](https://r-pkgs.org/whole-game.html)
+-   See this superb blog post, [Building a team of internal R packages](https://emilyriederer.netlify.app/post/team-of-packages/) for how to think about package building for a team.
+-   For a fantastic visual overview of packages, see this cheatsheet: https://github.com/rstudio/cheatsheets/blob/main/package-development.pdf
+
+## :coffee: Installing a Package from GitHub
+
+1.  Find the package on GitHub. For example: https://developer.nasa.gov/ygilbo/test-ochco-people-analytics-package
+2.  Click the green "Code" button and copy the HTTPS or SSH of the repo.
+3.  Open the terminal in RStudio in the directory that will contains packages (or wherever you choose).
+4.  Run **`git clone HTTPS_CLONE`** where the HTTPS_CLONE is the address you copied in step 1.
+5.  Run the following commands in order:
+
+```         
+library(devtools)
+load_all()
+install()
+```
+
+Or, if you don't have access to git.\
+1. Download the package folder as a zip from GitHub. 2. Unzip the file in RStudio. Open the R Project within the folder. 3. Run the following commands in order:
+
+```         
+library(devtools)
+load_all()
+install()
+```
+
+6.  Now you can use the functions in the package by importing it as a library, as usual `library(yourPackage)`
+
+## :fried_egg: Create a Package
+
+In order to create a package, follow the subsequent steps: 1. In R, load devtools via the command: **`library(devtools)`** 2. In R, create a package in a specific location via: **`create_package(PATH)`** where PATH is the location at which you wish the package to be created. 3. In R, call the following command to create your first .R file within the package: **`use_r(FILENAME)`** where FILENAME is the name of the file. This .R file will house our functions and their descriptions. Multiple .R files can be created to segregate all functions from one another or create groups of functions. 4. Place your function into FILENAME. Do not add any supporting code (e.g., don’t call library(dplyr) or anything else). 5. Run the command: **`load_all()`**. This loads the contents of your package. 6. Run the command: **`use_mit_license()`**. This assigns a license to your package. 7. Open the DESCRIPTION file generated automatically by create_package. Edit the authorship information and remove the ORCID option. 8. Return to FILENAME.R and add documentation based on the following example:
+
+```         
+#' Split a string
+#'
+#' @param x A character vector with one element.
+#' @param split What to split on.
+#'
+#' @return A character vector.
+#' @export
+#'
+#' @examples
+#' x <- "alfa,bravo,charlie,delta"
+#' strsplit(x, split = ",")
+x <- function(){}
+```
+
+ROxygen2 can be used to facilitate this process by generating a skeleton for documentation.
+
+[r - Can RStudio automatically generate an roxygen template for a function? - Stack Overflow](https://stackoverflow.com/questions/10825058/can-rstudio-automatically-generate-an-roxygen-template-for-a-function)
+
+9.  Run the command: **`document()`**. This command automatically generates documentation so that the function can be run with ?function.
+10. If there are any packages your functions rely on outside of base R, run the following command to include them in the documentation: **`use_package(PACKAGE)`**.
+11. Run **`check()`** before installing the package.
+12. Run **`install()`** to install the package.
+13. If you need to include data in your package, run the command: **`use_data(DATA)`** where DATA is the dataset you wish to include. This process converts the data to an .RData file. Documentation can be supplied for the data using the same roxygen2 format. For example,
+
+```         
+#' Prices of 50,000 round cut diamonds.
+#'
+#' A dataset containing the prices and other attributes of almost 54,000
+#' diamonds.
+#'
+#' @format A data frame with 53940 rows and 10 variables:
+#' \describe{
+#'   \item{price}{price, in US dollars}
+#'   \item{carat}{weight of the diamond, in carats}
+#'   ...
+#' }
+#' @source \url{http://www.diamondse.info/}
+```
+
+Do not @export datasets.
+
+### Updating an existing package
+
+In your local or server R environment 1. Activate the `ochco.Rproj` file 2. Run `git pull`
+
+# Misc Notes
+
+-   Make sure to specify the package for external functions (ex. ggplot2::plot)
+-   To rename a function (everywhere in the package), run (ex) **`rename_files("strsplit1", "str_split_one")`**
+
+## :heavy_check_mark: Adding Unit Tests (Optional, Good Practice)
+
+1.  Run `use_testthat()` to generate unit test file structure.
+2.  Run `use_test("YourFunctionName")` to create a script for test(s) of a function and fill in.
+3.  Run `test()` to do the tests. The tests also run when you run check().
+
+## :ice_cream: Putting your package on GitHub
+
+-   Create a repository on GitHub. Copy the https or ssh.
+-   Using the terminal in RStudio, run - but replace the https url to your repo. Make sure you are in the directory you want to be save the repo folder.
+
+**`git clone https://developer.nasa.gov/ygilbo/test-ochco-people-analytics-package.git`** \* Move any existing code to this repo. Delete the original (and now empty folder).
+
+# Using Quarto and R
+
+@fig-airquality uses an R code block and is fully coded in RStudio in a .QMD file.
+
+```{r}
+#| label: fig-airquality
+#| fig-cap: "Temperature and ozone level."
+#| warning: false
+
+library(ggplot2)
+
+ggplot(airquality, aes(Temp, Ozone)) + 
+  geom_point() + 
+  geom_smooth(method = "loess")
+```

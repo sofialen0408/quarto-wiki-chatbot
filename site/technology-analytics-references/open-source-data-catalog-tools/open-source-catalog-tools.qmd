@@ -1,0 +1,70 @@
+---
+title: Open Source Catalog Tools
+---
+
+Recently a review from self-proclaimed “third gen data catalog” Atlan compared features of six different open source data catalog components (no one systems does it all!). While each of the reviews was informative, each was also written from the [Atlan lens](https://atlan.com/open-source-data-catalog-tools/). An overview of functions for those tools, including Atlan is included here.
+
+Overall each of the tools acts as part of a solution set, although some seem to have a bigger focus on avoiding dependencies than others. Most of them focus on metadata management and discovery. Most include Kafka and Elastic Search in their architecture. A few use airflow. One focuses on ML and automation. My personal pick overall is OpenDataDiscovery. Check them out for yourself!
+
+-   [Amundsen](#amundsen)
+-   [Apache Atlas](#apache-atlas)
+-   [Atlan,](#atlan-architecture) not open source, but uses Apache Atlas as part of it's solution
+-   [DataHub](#datahub)
+-   [Marquez](#marquez)
+-   [OpenDataDiscovery](#OpenDataDiscovery)
+-   [OpenMetaData](#OpenMetaData)
+
+## *Amundsen* {#amundsen}
+
+-   Focus is data indexing and discovery.\
+-   Can pull from Hive, Postgres, Gibhub… needs Atlas or Neo4j to ingest metadata. Streamlined functionality. Unknown engineering LoE. \### Amundsen architecture
+
+![](../../media/AmundsenArchitecture.png)
+
+## *Apache Atlas* {#apache-atlas}
+
+-   Focus is a metastore repository. Governance. Lineage. Metadata import/export.
+-   Hadoop centric. Large engineering level-of-effort in the form of connecting other tools for sustainability,
+-   Commonly included in a data stack. Atlan incorporates Atlas (See reference info, Apach architecture and Atlan architecture.
+
+### Apache Atlas architecture
+
+![](../../media/ApacheAtlasArchitecture.png)
+
+### *Atlan Cloud architecture*
+
+![](../../media/AtlanCloudArchitecture.png)
+
+## *DataHub* {#datahub}
+
+-   Focus is discovery, collaboration, observability, and overall metadata management.\
+-   Anyone can contribute to this wiki by adding and editing pages.
+-   Can ingest MS SQL. Uses Airflow, Kafka and Elastic Search. Moderate perceived engineering level-of-effort. \### DataHub architecture
+
+![](../../media/DataHubqArchitecture.png)
+
+## *Marquez* {#marquez}
+
+-   Focus is metadata management.\
+-   Facilitates data lineage across data sets. Primarily Java. Requires PostgreSQL 14. Few noted users. [Linux Foundation AI and Data project](https://lfaidata.foundation/projects/marquez/).\
+-   Large [GH repo](https://github.com/MarquezProject/marquez?tab=readme-ov-file). No architecture diagram located.
+
+## *OpenDataDiscovery* {#opendatadiscovery}
+
+-   Focus is metadata management, machine learning.\
+-   Works by capturing the data ecosystem (ETL = tool, datastore, pipelines) standardizes through an ODD Specification. Flexible architecture. \### OpenDataDiscovery architecture
+
+![](../../media/OpenDataDiscovery.png)
+
+### *OpenMetadata* {#openmetadata}
+
+-   Focus is a push and pull metadata tool.\
+-   Centralizes metadata using open standards into a metadata lake, shares with schemas and APIs.\
+-   Operates from a “single source of truth model”. \### OpenMetadata architecture
+
+![](../../media/OpenMetadataArchitecture.png)
+
+## POCs
+
+-   About People Analytics tools and methods -- email David Meza (david.meza-1\@nasa.gov), Branch Chief of People Analytics
+-   About Catalogs and Data Governance-- email Sarah Hampton (sarah.hampton\@nasa.gov), People Analytics

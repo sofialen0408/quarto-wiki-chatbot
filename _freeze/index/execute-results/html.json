@@ -1,0 +1,12 @@
+{
+  "hash": "1d1e0907caa9d69272fcbc77d9afc11b",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\nbackgroundcolor: \"rgba(230, 240, 250, 0.5)\"\nid: begin\ntoc: false\n---\n\n```{=html}\n\n<style>\n  .styled-text {\n    color: darkblue;\n    font-size: 50px;\n  }\n</style>\n\n<h1 class=\"styled-text\">Welcome to the People Analytics Knowledge Base</h1>\n```\n\n```{css}\n.hero-buttons {\n  background-color: darkblue;\n  color: white;\n  border-radius: 10px;\n}\n```\n\n\n\n::: hero-buttons\n[Emplotee Resources](site/employee-resources/employee-resources.qmd){.btn-action-primary .btn-action .btn .btn-success .btn-lg role=\"button\" style=\"margin-top: 1em;\"} [Analytical References](site/analytic-references/analytic-references.qmd){#btn-guide .btn-action .btn .btn-info .btn-lg role=\"button\"}\n\n[Data Dictionaries](site/data-dictionary/pdd.qmd){.btn-action-primary .btn-action .btn .btn-success .btn-lg role=\"button\"} [Data Systems](site/data-systems/data-systems.qmd){.btn-action .btn .btn-info .btn-lg role=\"button\"}\n\n[Data Context](site/data-context/dc.qmd){.btn-action-primary .btn-action .btn .btn-success .btn-lg role=\"button\"} [Functional Areas](site/functional-areas/functional-info.qmd){.btn-action .btn .btn-info .btn-lg role=\"button\"}\n:::\n\nThis wiki is a place for us to document our knowledge on:\n\n-   People Analytics POCs\n\n-   Technical notes about commonly-used systems & data sources (e.g. BOBJ, EDP, MCP)\n\n-   Context and details about data that spans topics and functional areas (e.g. MSEOs)\n\n-   Context and details about topical data (e.g. demographics, pay, etc.)\n\n-   Context and details about data usage for functional areas (e.g. training development, talent acquisition)\n\n-   Advice/guides on analyses (e.g. retirement)\n\n-   Analytical tools (e.g. R, Tableau)\n\n-   People Analytics products\n\n-   General learning resources & links\n\nThis knowledge base saves time & keeps us all on the same page.\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

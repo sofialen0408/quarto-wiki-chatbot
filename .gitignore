@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+renv.lock
+
+/.quarto/
+/_site/
+/rsconnect/
+/site/rsconnect/
+/output/
+/myvenv/
+
+.DS_Store
+/site/.DS_Store
+/*/.DS_Store

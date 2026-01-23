@@ -1,0 +1,93 @@
+---
+title: "Seach the PA Knowledge Base"
+author: "Nadir Siddiqui"
+date: "02/27/2025"
+date-modified: last-modified
+format: html
+---
+
+# LLM-Assisted Search
+
+This page sends a prompt to our Ollama API and receives a streamed response. **TODO**: Retrieve Quarto site embeddings from Weaviate to integrate RAG in this feature.
+
+<div>
+
+<label for="messageInput">Enter your message:</label> <input type="text" id="messageInput" placeholder="Type your message here..." style="width:60%;"> <button onclick="sendMessage()">Send</button>
+
+</div>
+
+```{=html}
+<pre id="output">Response will appear here...</pre>
+```
+
+```{=html}
+<script>
+  async function sendMessage() {
+    const apiUrl = "http://131.110.210.167:443/api/generate";
+    const message = document.getElementById('messageInput').value;
+    
+    // Construct the payload with a fixed model and the user prompt.
+    const payload = {
+      model: "llama3.3:70b-instruct-q4_K_M",
+      prompt: message
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      // Use the stream API to process the response.
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let output = "";
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        // Decode the current chunk and append it to our buffer.
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Split the buffer into lines; each line should be a JSON object.
+        const lines = buffer.split("\n");
+        // The last line may be incomplete—save it back to buffer.
+        buffer = lines.pop();
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const jsonObject = JSON.parse(line);
+              // If the JSON object has a "response" property, append it.
+              if (jsonObject.response) {
+                output += jsonObject.response;
+                document.getElementById("output").textContent = output;
+              }
+            } catch (error) {
+              console.error("Error parsing line:", error, line);
+            }
+          }
+        }
+      }
+      
+      // Process any remaining content in the buffer.
+      if (buffer.trim()) {
+        try {
+          const jsonObject = JSON.parse(buffer);
+          if (jsonObject.response) {
+            output += jsonObject.response;
+            document.getElementById("output").textContent = output;
+          }
+        } catch (error) {
+          console.error("Error parsing final buffer:", error, buffer);
+        }
+      }
+    } catch (error) {
+      document.getElementById("output").textContent = "Error: " + error.message;
+      console.error("Error communicating with the Ollama API:", error);
+    }
+  }
+</script>
+```

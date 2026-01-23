@@ -1,0 +1,35 @@
+/*-- scss:defaults --*/
+// Base document colors
+$code-block-bg-alpha: -.8;
+
+$body-bg: #555555;
+$body-color: white;
+$input-bg:  #555555;
+$navbar-bg: black;
+$sidebar-bg: black;
+$sidebar-hl: darkblue;
+$code-bg: #555555;
+$callout-color-tip: darkblue;
+$callout-color-caution: darkblue;
+$callout-color-warning: darkblue;
+$callout-color-important: darkblue;
+$callout-icon-scale: 0%;
+$link-color: darkblue;
+$popover-bg: #555555;
+
+body {
+    background-color: #555555 !important;
+    $body-bg: #555555;
+}
+
+.alt-background {
+  background-color: #555555 !important;
+  $body-bg: #555555;
+  border-top: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.feature p:first-of-type {
+  margin-bottom: 0.2rem;
+  color: white !important;
+}

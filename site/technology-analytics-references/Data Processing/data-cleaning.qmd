@@ -1,0 +1,5 @@
+---
+title: Data Synthesis & Processing
+---
+
+Generation \* [Faker (Python)](https://faker.readthedocs.io/en/master/): Python package that generates fake data for you \* [Charlatan (R)](https://github.com/ropensci/charlatan): makes fake data, inspired from and borrowing some code from Python's faker

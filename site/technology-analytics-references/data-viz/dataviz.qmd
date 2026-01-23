@@ -1,0 +1,15 @@
+---
+title: Data Visualization
+---
+
+# Data Visualization Guidelines
+
+-   [Consumer Financial Protection Bureau Data Viz Guidelines](https://cfpb.github.io/design-system/guidelines/data-visualization-guidelines)
+-   [Catalog of Charts](https://datavizcatalogue.com/)
+-   [508 Compliance](https://www.section508.gov/test/)
+-   [Data Viz Guide from digital.gov](https://designsystem.digital.gov/components/data-visualizations/)
+
+# Data Visualization Examples
+
+-   [Data Viz Inspiration](https://www.dataviz-inspiration.com/)
+-   [Example of dashboard showing survey results (GSA)](https://d2d.gsa.gov/report/government-wide-pulse-survey-pilot)

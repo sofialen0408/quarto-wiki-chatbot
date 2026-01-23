@@ -1,0 +1,14 @@
+---
+title: Knowledge Graph
+---
+
+# Packages & Tools
+
+## Packages
+
+-   [GraphGPT](https://github.com/varunshenoy/GraphGPT): converts unstructured natural language into a knowledge graph
+
+# Articles & Resources
+
+-   [Medium: Integrate LLM workflows with Knowledge Graph using Neo4j and APOC](https://towardsdatascience.com/integrate-llm-workflows-with-knowledge-graph-using-neo4j-and-apoc-27ef7e9900a2)
+-   [Neo4j Blog: Context-Aware Knowledge Graph Chatbot With GPT-4 and Neo4j](https://neo4j.com/developer-blog/context-aware-knowledge-graph-chatbot-with-gpt-4-and-neo4j/?utm_campaign=Developer+Blog+&utm_content=UI&utm_medium=social&utm_source=LinkedIn&utm_tag=ChatGPT%2CCommunity%2CDevRel&utm_term=Link)

@@ -1,0 +1,17 @@
+---
+title: RShiny
+---
+
+### Where to Start
+
+[Hands-On Video Tutorials - https://shiny.rstudio.com/tutorial/](https://shiny.rstudio.com/tutorial/)
+
+[Book by Hadley Wickham - https://mastering-shiny.org/](https://mastering-shiny.org/)
+
+### Design
+
+[Styling Shiny & R Markdown with bslib & thematic](https://talks.cpsievert.me/20200715/#1) - powerpoint recommended by Madison
+
+### Other Resources
+
+[Book: Interactive web-based data visualization with R, plotly and shiny (formerly ploty for R) by Carson Sievert](https://plotly-r.com/) recommended by David

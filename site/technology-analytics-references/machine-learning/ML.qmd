@@ -1,0 +1,22 @@
+---
+title: Machine Learning Tools & Clustering
+---
+
+# ML Tools
+
+-   [Prodigy](https://prodi.gy/): data annotation tool
+-   [Microsoft Skills Extractor Cognitive Search (NER Model)](https://github.com/microsoft/SkillsExtractorCognitiveSearch)
+
+# Clustering
+
+Clustering is a method of analysis for grouping individual observations into "clusters" that are as close to each other as possible but also as dissimilar from other clusters. Clustering is unsupervised, meaning that predictions about new data aren't made, but instead you are trying to understand the existing structure of your dataset.
+
+### Team Collaboration
+
+-   Clustering walkthrough and brainstorming session with Nick: [Meeting Recording](https://nasa-my.sharepoint.com/:v:/g/personal/sdegirol_ndc_nasa_gov/EaW0Cb2WdHZPgwT1vLDfLVcBOb951BxePmvwQ_6mXk4BBg)
+
+### Resources
+
+-   [Hierarchical Clustering on Categorical Data in R](https://towardsdatascience.com/hierarchical-clustering-on-categorical-data-in-r-a27e578f2995)
+-   [Hierarchical Clustering](https://uc-r.github.io/hc_clustering) and [K-Means Clustering](https://uc-r.github.io/kmeans_clustering) by University of Cincinnati
+-   [*Practical Statistics for Data Scientists*](https://www.oreilly.com/library/view/practical-statistics-for/9781491952955/) by Peter Bruce & Andrew Bruce

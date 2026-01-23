@@ -1,0 +1,354 @@
+---
+backgroundcolor: "white"
+id: begin
+section-divs: false
+page-layout: custom
+toc: false
+css: styles.css
+---
+
+::: homepage-h1
+Welcome to the Team Wiki!
+:::
+
+````{=html}
+<!-- ```{=html}
+<div style="margin-left: 75px; color: darkblue; font-size: 25px; font-weight: bold;">
+  A place for us to document our knowledge, including:
+</div>
+
+<div style="color: darkblue; font-size: 20px; font-weight: 350; display: inline-block; padding-left: 50px; list-style-position: inside;">
+
+<ul>
+
+<li>People Analytics POCs and NASA resources</li>
+
+<li>Technical notes about commonly-used systems & data sources (e.g. BOBJ, EDP, MCP)</li>
+
+<li>Defintions and details about topical data (e.g. demographics, pay, etc.)</li>
+
+<li>Context and details about data usage for functional areas (e.g. executive services, talent acquisition)</li>
+
+<li>Analytical tools (e.g. R, Tableau)</li>
+
+<li>General learning resources & links</li>
+
+</ul>
+
+</div>
+```
+```{=html}
+<div style="display: flex; gap: 20px; margin-left: 90px;">
+  <a href="site/employee-resources/pa-resources/contributing-quarto/main.qmd"
+     style="display: inline-block; padding: 15px 20px; background-color: #F16125; color: #ffffff; text-decoration: none; border: 2px solid #F16125; border-radius: 15px; font-size: 17px; text-align: center; transition: background-color 0.3s ease, color 0.3s ease;"
+     onmouseover="this.style.backgroundColor='#F8B092'; this.style.color='#ffffff';"
+     onmouseout="this.style.backgroundColor='#F16125'; this.style.color='#ffffff';">
+    Contribution Guide
+  </a>
+</div>
+``` -->
+````
+
+::: grid
+:::
+
+
+
+
+
+::::::: alt-background
+:::::: content-block
+::: section-h1
+Data Products & Use Cases
+:::
+
+::: section-h2
+This section will cover our management & governance of the various People Analytics data products, as well as the usage of internal & external products & data.
+:::
+
+```{=html}
+<!-- <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function() {
+    // Select all tab links and tab contents
+    const tabs = document.querySelectorAll(".custom-nav-link");
+    const contents = document.querySelectorAll(".custom-tab-content");
+
+    // Add click event listener to each tab link
+    tabs.forEach(tab => {
+      tab.addEventListener("click", function(event) {
+        event.preventDefault(); // Prevent the default anchor link behavior
+
+        // Remove active class from all tabs and contents
+        tabs.forEach(t => t.classList.remove("active"));
+        contents.forEach(c => c.classList.remove("active"));
+
+        // Add active class to the clicked tab and its corresponding content
+        tab.classList.add("active");
+        const target = document.querySelector(tab.getAttribute("data-target"));
+        target.classList.add("active");
+      });
+    });
+  });
+</script> -->
+```
+
+::: content-block
+Coming Soon!
+:::
+
+````{=html}
+<!-- ::: column-page-inset-right
+```{=html}
+<style type="text/css">
+.nav-tabs {
+  margin-top: 0.5rem;
+  border-bottom: none;
+}
+
+.callout {
+  margin-top: 0;
+}
+
+.nav-tabs .nav-link {
+  text-align: center;
+  margin-right: 15px;
+  margin-top: 10px;
+  width: 160px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link,
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  border: 1px solid rgb(222, 226, 230);
+  border-radius: 10px;
+  color: darkblue;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: darkblue;
+  border-width: 1px;
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  border-color: darkblue;
+  border-width: 2px;
+}
+
+.nav-tabs .nav-link i {
+  display: block;
+  font-size: 3rem;
+  color: darkblue;
+  margin-bottom: 5px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+</style>
+
+<div class="nav-tabs">
+  <ul id="index-chooser" class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active" data-target="#executive-services">
+        <i class="bi bi-journal-text"></i>Executive Services
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" data-target="#talent-services">
+        <i class="bi bi-file-earmark-richtext"></i>Talent Services
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" data-target="#workforce-planning">
+        <i class="bi bi-gear"></i>Workforce Planning
+      </a> 
+    </li>
+  </ul>
+</div>
+
+<div id="tab-contents">
+  <div id="executive-services" class="tab-content active">
+    
+<div style="margin-left: 15px; color: darkblue; font-size: 20px; font-weight: 350;">
+
+<ul>
+
+<li>Awards</li>
+
+<li>Position</li>
+
+<li>Staffing</li>
+
+</ul>
+
+<a href="site/data-products-use-cases/internal-products-&-data-usage/executive-services/main.qmd">Go to page &raquo;</a>
+
+</div>
+  </div>
+  <div id="talent-services" class="tab-content">
+   
+   <div style="margin-left: 15px; color: darkblue; font-size: 20px; font-weight: 350;">
+
+<ul>
+
+<li>Talent Management</li>
+
+<li>Talent Acquisition</li>
+
+<li>Talent Development</li>
+
+</ul>
+
+</div>
+   
+  </div>
+  <div id="workforce-planning" class="tab-content">
+    
+    Overview of workforce planning
+  </div>
+</div>
+
+
+
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+  const tabs = document.querySelectorAll("#index-chooser .nav-link");
+  const contents = document.querySelectorAll(".tab-content");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", function() {
+      tabs.forEach(t => t.classList.remove("active"));
+      contents.forEach(c => c.classList.remove("active"));
+
+      tab.classList.add("active");
+      const target = document.querySelector(tab.getAttribute("data-target"));
+      target.classList.add("active");
+    });
+  });
+});
+</script>
+```
+::: -->
+````
+::::::
+
+::: grid
+:::
+::::::: alt-background
+
+:::::: content-block
+::: section-h1
+Technology & Analytics References
+:::
+
+::: section-h2
+Contains non-OCHCO specific technical resources, including tutorials.
+:::
+
+::: content-block
+Coming Soon!
+:::
+
+```{=html}
+<!-- ::: content-block
+::: features
+::: feature
+### Python
+
+Resources and links about Python, including getting started and troubleshooting the language.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/python/python.qmd)
+:::
+:::
+
+::: feature
+### R
+
+Resources and links about R, including cooking R packages and updating an existing package.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/R/R.qmd)
+:::
+:::
+
+::: feature
+### GitHub
+
+Resources and links about GitHub, including connecting to GitHub, working with branches, and project management.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/github/github.qmd)
+:::
+:::
+
+::: feature
+### Large Language Models
+
+Resources and links about LLMs, including articles, packages, and tools.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/llm/LLM.qmd)
+:::
+:::
+
+::: feature
+### Dashboarding
+
+RShiny resources and design information.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/Dashboarding/RShiny.qmd)
+:::
+:::
+
+::: feature
+### Data Visualization
+
+Guidelines and examples surrounding data visualization.
+
+::: learn-more
+[Learn more »](site/technology-analytics-references/data-viz/dataviz.qmd)
+:::
+:::
+:::
+::: -->
+```
+::::::
+:::::::
+
+:::::: content-block
+::: section-h1
+PA Knowledge Base Search
+:::
+
+::: section-h2
+Use our LLM-assisted search tool for quick answers!
+:::
+
+::: content-block
+[Learn more »](site/quarto_llm/main.qmd)
+:::
+::::::
+
+:::: content-block
+::: {style="text-align: center;"}
+```{=html}
+<div style="display: flex; gap: 20px; justify-content: center;">
+  <a href="site/employee-resources/pa-resources/contributing-quarto/main.qmd"
+     style="display: inline-block; padding: 15px 20px; background-color: #F16125; color: #ffffff; text-decoration: none; border: 2px solid #F16125; border-radius: 15px; font-size: 17px; text-align: center; transition: background-color 0.3s ease, color 0.3s ease;"
+     onmouseover="this.style.backgroundColor='#F8B092'; this.style.color='#ffffff';"
+     onmouseout="this.style.backgroundColor='#F16125'; this.style.color='#ffffff';">
+    Learn How to Contribute
+  </a>
+</div>
+```
+:::
+::::

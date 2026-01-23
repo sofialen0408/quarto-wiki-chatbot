@@ -1,0 +1,11 @@
+---
+title: Data Products & Use Cases Overview
+id: dp-us
+author: Ostermann, Hampton
+date: "08/23/2024"
+date-modified: last-modified
+---
+
+Technical and non-technical stakeholders outside of People Analytics may not be aware of the analytic value our data process brings. Try sharing your version of the following:
+
+"Our People Analytics team has developed automation processes to retrieve and transform data from the Personnel Data Warehouse (PDW) into curated content that is sustainable and AIML ready. The resulting human capital datalake serves as the data source analytics and visualizations, with little to no manual updates required. This approach is different from using BOBJ reports to pull PDW data directly, as it allows for continuous updates while enhancing efficiency and accuracy in the dashboard.""

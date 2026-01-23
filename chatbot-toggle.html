@@ -1,0 +1,35 @@
+<div id="chatbot-container" class="chatbot-container">
+    <div class="chatbot-header">
+      <h3>Chatbot</h3>
+      <button id="close-chatbot" class="close-button">&times;</button>
+    </div>
+    <div class="chatbot-body">
+      <iframe id="chatbot-iframe" src="https://dev.ochco-connect.ochco.nasa.gov/pa-knowledge-base-bot/" frameborder="0"></iframe>
+    </div>
+  </div>
+  
+  <button id="chatbot-toggle" class="chatbot-toggle-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const chatbotToggle = document.getElementById('chatbot-toggle');
+      const chatbotContainer = document.getElementById('chatbot-container');
+      const closeButton = document.getElementById('close-chatbot');
+      
+      // Toggle chatbot visibility
+      chatbotToggle.addEventListener('click', function() {
+        chatbotContainer.classList.toggle('visible');
+        chatbotToggle.classList.toggle('hidden');
+      });
+      
+      // Close chatbot
+      closeButton.addEventListener('click', function() {
+        chatbotContainer.classList.remove('visible');
+        chatbotToggle.classList.remove('hidden');
+      });
+    });
+  </script>

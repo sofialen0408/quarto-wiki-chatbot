@@ -1,0 +1,10 @@
+---
+title: Design Tools
+---
+
+### Designing a Web App/Dashboard
+
+-   https://excalidraw.com/ - awesome quick sketch tool recommended by Andy, endorsed by Madison/Katya
+-   <http://draw.io/> - wireframing tool recommended by Madison
+-   https://communications.nasa.gov/sites/all/sites/default/private/files/files/NASA_GraphicsStandardsManual_Feb1_2021C.pdf - helpful for NASA color palette
+-   MURAL (ask David Meza to create a MURAL board for you, since he has the only NASA license for the team)

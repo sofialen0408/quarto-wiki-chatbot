@@ -1,0 +1,133 @@
+---
+title: Data Process and Roles
+---
+
+> **Data Process**
+>
+> ![A picture containing calendar Description automatically generated](../../media/image6.jpg){width="6.5in" height="3.548611111111111in"}
+>
+> Master Data Management:
+>
+> Collaboration between business and IT to ensure the uniformity, accuracy, stewardship, semantic consistency, and accountability of shared master data assets
+>
+> Data Governance:
+>
+> System for defining who within an organization has authority and control over data assets and how they will be used. Encompasses the people, processes, and technologies required to manage and protect data assets
+
+Areas of consideration include:
+
+-   Cataloging
+
+-   Defining
+
+-   Standardizing
+
+-   Data Quality
+
+-   Employee Profile (attributes)
+
+-   Use of APIs / API Manager
+
+-   Roles-based access / administration
+
+-   Security
+
+-   Records Management
+
+-   Discoverability
+
+    <div>
+
+    > Data Standards: 
+    >
+    > Documented agreements on representation, format, definition, structuring, tagging, transmission, manipulation, use, and management of data. Make it easier to create, share, and integrate data by making sure there is clear understanding of how data are represented and received.
+    >
+    > Data Quality: 
+    >
+    > The planning, implementation, and control of activities, that apply quality management techniques to data. Ensures data accuracy, completeness, consistency, integrity, timeliness, uniqueness, validity, and accessibility.
+    >
+    > Data Access: 
+    >
+    > On-demand authorized ability to retrieve, modify, copy, or move data from systems. Can perform these functions in any location and with data in motion or rest.
+    >
+    > [Data Pipeline](http://app/obsidian.md/Data%20Pipeline): Set of data processing elements connected to a series, where the output of one element is the input of the next one.
+    >
+    > Data Roles
+    >
+    > Data Consumer: 
+    >
+    > Individuals using the data. Important the data is good enough for them to do their job. Responsible for defining what makes the data good enough to use.
+    >
+    > Data Analyst: 
+    >
+    > Examine large data sets to identify trends, develop charts, and create visuals presentations to help make strategic decisions. Utilize well defined data to draw meaningful insights and solve problems. The data analyst acts as a gatekeeper for an organization's data, ensuring that stakeholders understand it and utilize it to make intelligent business choices. The ideal candidate for this job should also be skilled in programming, machine learning, and data visualization. Analysts frequently work with massive data sets and must have excellent mathematical abilities. Data analysts should also have a firm grasp of programming languages.
+    >
+    > Data visualization is an essential element for data analysts since it portrays data to allow company executives to make quick decisions focused on day-to-day operations. This function of data storytelling overlaps with the role of a data scientist.
+
+    </div>
+
+Key responsibilities of a data analyst are:
+
+-   Designing and managing data systems and databases, including addressing code level and other data-related issues.
+
+-   Using statistical techniques to evaluate data sets, focusing on trends and patterns that might be useful for diagnostic and predictive analytics initiatives.
+
+-   Data mining from primary and secondary sources, followed by data reorganization so that both humans and machines can readily read.
+
+    <div>
+
+    > Data Scientist: 
+    >
+    > Design and construct new processes for data modeling and production using prototypes, algorithms, predictive models, and custom analysis. Estimate the unknown by asking questions, writing algorithms, and building statistical models. A Data Scientist is responsible for designing, developing, and deploying data-intensive solutions for the organization and sharing your findings with stakeholders. To support the business solution, you'll need to prepare Big Data, develop suitable data models, and create databases. One should be equipped with good analytical skills complemented with a solid foundation in math and statistics for this position. Data interpretation necessitates critical thinking and problem-solving abilities. 
+    >
+    > A Data Scientist must also have a solid grasp of business processes and narrative and data visualization abilities to communicate insights with colleagues throughout the firm. Although each function has separate data-related objectives and procedures, the skill sets necessary for these positions frequently overlap with other roles such as understanding software languages like Python/R programming, SQL, Tableau, and more.
+    >
+    > Key responsibilities of a data scientist are:
+
+    </div>
+
+-   Collaborate with stakeholders across the organization to find opportunities to use corporate data to create business solutions.
+
+-   Information from company databases is mined and analyzed to promote optimization and enhancement of product development, marketing tactics, and strategic plans.
+
+-   Increase and improve customer experiences, revenue creation, ad targeting, and other company results.
+
+    <div>
+
+    > Data Steward: 
+    >
+    > Responsible for the quality of a defined dataset on a day to day basis. Knows the data and business needs and rules that govern it.
+    >
+    > Data Engineer: 
+    >
+    > Helps make mechanisms and interfaces for the smooth flow and access to reliable data. Build and maintain the frameworks. Data engineers set the groundwork for a database's design. They evaluate a wide variety of needs and use suitable database methods to build a robust architecture. A data engineer manages the database and assures that it operates correctly and without interruption. You should be familiar with database systems and data warehousing.
+    >
+    > Similarly, you should be able to do a data storage comparison study. Understand the differences between relational and non-relational database architectures. It requires knowledge of SQL, NoSQL, and other advanced data querying languages.
+
+    </div>
+
+    Key responsibilities of a data engineer are:
+
+-   Identify, develop, and execute internal process enhancements such as improving data distribution, automating manual procedures, and re-designing architecture for improved scalability.
+
+-   Create and maintain the data pipeline architecture for extraction, transformation, and collection of data from a wide range of sources by leveraging SQL and cloud technology.
+
+-   Create data tools to aid analytics and data scientist coworkers to construct and optimize our business to become an innovative market leader.
+
+    <div>
+
+    > Data Architect:
+    >
+    > Help define the data principles and standards by translating the business requirements into technical requirements and visualize and conceptualize data frameworks. Data architects are senior strategists who convert business objectives into technical specifications and create data standards and principles. The data architect is in charge of conceptualizing and developing the data pipeline architecture for a company. There is no standardized accreditation for data architects. Typically, data architects begin their careers as data analysts, data engineers, or solutions architects and progress through the ranks to become data architects with years of experience and expertise in data design, information management, and data storage. Most data architects have degrees in information systems, computer science, or a closely related discipline.
+
+    </div>
+
+Key responsibilities of a data architect are: - Business needs are translated into technical specifications, including data streams, integrations, transformations, databases, and data warehouses.
+
+-   Defining the architectural data framework, norms, and principles, including modeling, metadata, security, reference data like product codes and client categories, and master data like clients, vendors, materials, and personnel.
+
+-   Collaboration and synchronization with a range of disciplines, stakeholders, clients, and external stakeholders
+
+> Data Owner:
+>
+> A Senior individual that has authority to make decisions about business term definitions, data quality, accessibility, and retention requirements as they tie to the business needs.

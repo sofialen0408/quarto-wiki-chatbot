@@ -1,0 +1,144 @@
+project:
+  type: website
+  output-dir: output
+  render: 
+    - "/site"
+    - "index.qmd"
+
+website:
+  search:
+    show-item-context: true
+  title: "PA Knowledge Base"
+  image: site/media/ochco_logo_vertical.png
+  favicon: site/media/OCHCOlogo.png
+  repo-url: https://posit.co/
+  repo-actions: [edit]
+  page-footer:
+    center:
+      - text: "Our Team & POC Guide"
+        href: site/employee-resources/pa-resources/our-team-poc-guide/main.qmd
+    right:
+      - icon: github
+        href: https://posit.co/
+        aria-label: PA Knowledge Base GitHub
+  navbar:
+    title: false
+    background: "#C8F0FF"
+    logo: site/media/ochco_logo_vertical.png
+    left:
+      - text: Home
+        href: index.qmd
+        icon: "house"
+      - text: Data Products & Use Cases
+        href: site/data-products-use-cases/main.qmd
+      - text: Technology & Analytics References
+        href: site/technology-analytics-references/main.qmd
+    foreground: "#7B7B7D"
+    tools:
+      - icon: github
+        menu:
+          - text: DUMMY GitHub Repository Link
+            href: https://posit.co/
+  sidebar:
+  - id: begin
+    title: "Home"
+    style: "docked"
+    collapse-level: 2
+    background: "white"
+    foreground: "#7B7B7D"
+    search: true
+    href: index.qmd
+  - id: dp-us
+    title: "Data Products & Use Cases"
+    collapse-level: 2
+    contents:
+      - text: "Data Products & Use Cases Overview"
+        href: site/data-products-use-cases/main.qmd
+      - text: "---"
+      - text: "---"
+      - section: "Data Product Management & Governance"
+        contents:
+          - text: "Data Process and Roles"
+            href: site/data-products-use-cases/data-product-management-&-governance/data-process-and-roles.qmd
+      - text: "---"
+  - id: taref
+    title: "Technology & Analytics References"
+    collapse-level: 1
+    contents:
+      - text: "Technology & Analytics References Overview"
+        href: site/technology-analytics-references/main.qmd
+      - text: "---"
+      - text: "---"
+      - text: "Python"
+        href: site/technology-analytics-references/python/python.qmd
+      - text: "---"
+      - text: "R"
+        href: site/technology-analytics-references/R/R.qmd
+      - text: "---"
+      - text: "Quarto"
+        href: site/technology-analytics-references/quarto/quarto.qmd
+      - text: "---"
+      - text: "GitHub"
+        href: site/technology-analytics-references/github/github.qmd
+      - text: "---"
+      - text: "Knowledge Graphs"
+        href: site/technology-analytics-references/graphs/knowledge-graphs.qmd
+      - text: "---"
+      - section: "Dashboarding"
+        contents:
+          - text: "RShiny"
+            href: site/technology-analytics-references/Dashboarding/RShiny.qmd
+      - text: "---"
+      - section: "LLMs"
+        contents: 
+          - text: "LLM Resources"
+            href: site/technology-analytics-references/llm/LLM.qmd
+          - text: "People Analytic's OAKIE Project"
+            href: "https://developer.nasa.gov/ochco/OAKIE"
+          - text: "People Analytic's StarQL Project"
+            href: "https://developer.nasa.gov/ochco/OpenAI-P1-StarQL"
+      - text: "---"
+      - text: "Machine Learning"
+        href: site/technology-analytics-references/machine-learning/ML.qmd
+      - text: "---"
+      - text: "Data Visualization"
+        href: site/technology-analytics-references/data-viz/dataviz.qmd
+      - text: "---"
+      - text: "Analytical Resources"
+        href: site/technology-analytics-references/Analytical Tools/Analytics-Resources.qmd
+      - text: "---"
+      - text: "Statistics"
+        href: site/technology-analytics-references/statistics/Statistics-Resources.qmd
+      - text: "---"
+      - text: "Design Tools"
+        href: site/technology-analytics-references/design/Design-Tools.qmd
+      - text: "---"
+      - text: "Data Synthesis & Processing"
+        href: site/technology-analytics-references/Data Processing/data-cleaning.qmd
+      - text: "---"
+      - text: "Open Source Data Catalog Tools"
+        href: site/technology-analytics-references/open-source-data-catalog-tools/open-source-catalog-tools.qmd
+      - text: "---"
+      - text: "Data Science Articles & Resources"
+        href: site/technology-analytics-references/Data Processing/Data-Science-Articles.qmd
+
+  draft-mode: visible
+
+format:
+  html:
+    theme: 
+      light: yeti
+      dark: [yeti, theme-dark.scss]
+    css: styles.css
+    grid:
+      sidebar-width: 200px
+    toc: true
+    include-after-body: chatbot-toggle.html
+
+freeze: true
+editor: visual
+stylesheets:
+  - styles.css
+
+scripts:
+  - script.js

@@ -1,0 +1,131 @@
+---
+title: "Technology & Analytics References Overview"
+subtitle: Contains non-OCHCO specific technical resources, including tutorials.
+toc: false
+---
+
+```{=html}
+<style>
+.container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+    grid-template-rows: repeat(4, auto); /* 4 rows */
+    gap: 0.5px; /* Space between grid items */
+}
+
+.column {
+    padding: 0.5px;
+    border: 0px
+}
+
+.column h3 {
+    margin-top: 0;
+}
+
+.column ul {
+    list-style-type: none; /* Remove bullet points */
+    padding-left: 0;
+}
+
+.column ul li {
+    margin-bottom: 1px; /* Space between list items */
+}
+
+a {
+    text-decoration: none; /* Remove underline from links */
+    color: inherit;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.header-link {
+    color: darkblue;
+    font-weight: bold;
+}
+
+.header-link:hover {
+    text-decoration: underline; /* Underline on hover */
+}
+</style>
+    
+<body>
+    <div class="container">
+        <div class="column">
+            <h3><a href=python/python.qmd class="header-link">Python</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/python/python.html#getting-started">Getting Started</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/python/python.html#troubleshooting">Trouble Shooting</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/python/python.html#learning-python">Learning Python</a></li>
+            </ul>
+        </div>
+        <div class="column">
+        
+            <h3><a href=R/R.qmd class="header-link">R</a></h3>
+            <ul>
+            <li><a href=http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/R/R.html#r-packages-tools">R Packages & Tools</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/R/R.html#cooking-r-packages-recipes">Cooking R Packages</a></li>
+                </ul>
+        </div>
+        <div class="column">
+            <h3><a href=github/github.qmd class="header-link">GitHub</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/github/github.html#general-resources-for-getting-started">Getting Started</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/github/github.html#connecting-to-github-on-rstudio-server">Connecting to GitHub on RStudio</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/github/github.html#working-with-branches-in-github-in-rstudio-server">Working with Branches</a></li>
+                
+              <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/github/github.html#using-github-for-project-management">Project Management</a></li>
+            </ul>
+        </div>
+        
+      <div class="column">
+            <h3><a href=graphs/knowledge-graphs.qmd class="header-link">Knowledge Graphs</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/graphs/knowledge-graphs.html#packages-tools">Packages & Tools</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/graphs/knowledge-graphs.html#articles-resources">Articles & Resources</a></li>
+            </ul>
+        </div>
+    
+    <div class="column">
+            <h3><a href=Dashboarding/RShiny.qmd class="header-link">Dashboarding</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/Dashboarding/RShiny.html#where-to-start">Where to Start</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/Dashboarding/RShiny.html#design">RShiny Design</a></li>
+            </ul>
+        </div>
+        
+        <div class="column">
+            <h3><a href=llm/LLM.qmd class="header-link">Large Language Models</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/llm/LLM.html#llm-articles-resources">Articles & Resources</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/llm/LLM.html#llm-packages-tools">Packages & Tools</a></li>
+                <li><a href="https://developer.nasa.gov/ochco/OAKIE">People Analytic's OAKIE Project</a></li>
+                <li><a href="https://developer.nasa.gov/ochco/OpenAI-P1-StarQL">People Analytic's StarQL Project</a></li>
+            </ul>
+            </div>
+             <div class="column">
+            <h3><a href=machine-learning/ML.qmd class="header-link">Machine Learning</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/machine-learning/ML.html#ml-tools">Tools</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/machine-learning/ML.html#clustering">Clustering</a></li>
+            </ul>   
+            </div>
+              <div class="column">
+            <h3><a href=data-viz/dataviz.qmd class="header-link">Data Visualization</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/data-viz/dataviz.html#data-visualization-guidelines">Guidelines</a></li>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/data-viz/dataviz.html#data-visualization-examples">Examples</a></li>
+            </ul>   
+            </div>
+            
+                <div class="column">
+            <h3><a href=design/Design-Tools.qmd class="header-link">Design Tools</a></h3>
+            <ul>
+                <li><a href="http://131.110.210.172:443/content/e6be8396-fa21-46f8-a231-4b2e6614a71d/site/technology-analytics-references/design/Design-Tools.html#designing-a-web-appdashboard">Designing a Web App/Dashboard</a></li>
+            </ul>   
+            </div>
+            
+    </div>
+</body>
+```

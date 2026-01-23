@@ -1,0 +1,40 @@
+---
+title: Python
+---
+
+This is a guidebook for getting started using **Python** for OCHCO analytics. Feel free to add tips or tricks
+
+## Getting Started
+
+### Essential Downloads
+
+Contact the OCHCO IT point of contact (James Blackwell james.m.blackwell\@nasa.gov as of 27 June 2022) for getting the following downloads installed on your computer: \* **Python** \* **NOTE:** A commonly occurring issue for folks getting started on Windows is that Python has not been added to the PATH environment variables. It is an optional checkbox during the install process that can easily be overlooked. During the install, make sure the option "Add Python to environment variables is selected on the Advanced Options page. \* **VS Code** \* VS Code tends to be the IDE of choice, but it is up to the individual. Other IDEs or the combination of a text editor and the terminal are valid alternatives. It is worth noting Anaconda itself is not available for download as it requires a license for organizations.
+
+### Optional Downloads
+
+-   pyenv
+    -   for [Windows](https://github.com/pyenv-win/pyenv-win)
+    -   for [Mac](https://github.com/pyenv/pyenv)
+-   Virtual Environment packages
+    -   [venv](https://docs.python.org/3/library/venv.html)
+    -   [virtualenv](https://pypi.org/project/virtualenv/)
+
+## Troubleshooting
+
+### Have a problem downloading packages with 'pip'?
+
+If the 'pip' command or others are not recognized, it could be a number of reasons. 1. Has Python been added to environment variables during install? \> If during a Windows install, Python was not added to the environment variables, you may not be able to call 'python' or 'pip' commands from the terminal. \> Any user can modify this setting at any time. \> 1. Go to Add or Remove Programs (assuming you're running Windows on your machine) \> 2. Find your Python version installed \> 3. Click it and select "Modify" \> "Modify" \> 4. Ensure "pip" is installed on the first page of Optional Features \> 5. Ensure "Add Python to environment variables" is selected on the Advanced Options page \> 6. Close any terminals and restart for good measure.
+
+2.  Do you have pyenv installed? \> Pyenv for Windows is a useful tool for managing different Python versions, but you may need to call commands differently now. \> 1. To pip install, use the exec command with pyenv. Example: `pyenv exec pip install pandas` \> 2. Other commands like 'virtualenv' can be executed in a similar way.
+
+# Learning Python
+
+-   [Pytudes](https://github.com/norvig/pytudes): short Python programs for perfecting particular programming skills
+
+### Python Packages
+
+-   [ReactPy](https://github.com/reactive-python/reactpy): library for building user interfaces in Python without Javascript
+
+### Python Tools
+
+-   [Visual Python](https://visualpython.ai/): GUI-based Python code generator

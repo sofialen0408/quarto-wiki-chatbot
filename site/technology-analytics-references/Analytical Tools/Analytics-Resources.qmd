@@ -1,0 +1,8 @@
+---
+title: Analytic Resources
+---
+
+-   [Article: HR Data Sources](https://www.aihr.com/blog/hr-data-sources/)
+-   [Building reproducible analytical pipelines with R](https://raps-with-r.dev/intro.html)
+-   Book: Predictive HR Analytics: Mastering the HR Metric, Second Edition (on Skillsoft)
+-   [Analytics on AWS - Services & Solutions](https://aws.amazon.com/big-data/datalakes-and-analytics/)

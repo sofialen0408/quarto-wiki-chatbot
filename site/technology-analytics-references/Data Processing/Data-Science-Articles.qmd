@@ -1,0 +1,6 @@
+---
+title: Data Science Articles & Resources
+---
+
+-   [Podcast: Brain Science is Data Science](https://uvadatapoints.castos.com/episodes/brain-science-is-data-science?mc_cid=988d702b0d&mc_eid=fb12e994a2)
+-   [Youtube Conference Playlist: WiDS 2023 Stanford](https://www.youtube.com/playlist?list=PLHAk3jHXWpxKGSFHyOu9pnSOP9AInU_O2)
