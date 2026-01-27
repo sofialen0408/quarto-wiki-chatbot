@@ -1,0 +1,385 @@
+---
+title: "Forecasting with Time Series Models"
+date: 2026-01-26
+tags: [time-series, forecasting, prediction, conditional-expectation]
+categories: [PSTAT 174, Applications]
+---
+
+## Overview
+
+Forecasting is the primary goal of time series analysis. We want to predict future values $x_{n+m}$ given observed data $x_1, \ldots, x_n$.
+
+## The Forecasting Problem
+
+Given observations $x_{1:n} = \{x_1, \ldots, x_n\}$, we want to find a function $g(x_{1:n})$ that minimizes the **mean squared prediction error**:
+
+$$\min_{g} E[(x_{n+m} - g(x_{1:n}))^2]$$
+
+::: {.callout-important}
+## Fundamental Result
+The optimal predictor (minimizing mean squared error) is the **conditional expectation**:
+$$\boxed{\hat{x}_{n+m}^n = E[x_{n+m} \mid x_{1:n}]}$$
+
+This is called the **minimum mean squared error (MMSE) predictor**.
+:::
+
+## Why Conditional Expectation?
+
+### Proof Sketch
+
+For any predictor $g(x_{1:n})$, define $g^*(x_{1:n}) = E[x_{n+m} \mid x_{1:n}]$.
+
+$$\begin{align}
+E[(x_{n+m} - g(x_{1:n}))^2] &= E[(x_{n+m} - g^* + g^* - g)^2] \\
+&= E[(x_{n+m} - g^*)^2] + E[(g^* - g)^2] \\
+&\quad + 2E[(x_{n+m} - g^*)(g^* - g)]
+\end{align}$$
+
+The cross term vanishes because:
+
+$$E[(x_{n+m} - g^*)(g^* - g)] = E[E[(x_{n+m} - g^*)(g^* - g) \mid x_{1:n}]]$$
+
+Since $g^* - g$ is a function of $x_{1:n}$:
+
+$$= E[(g^* - g)E[x_{n+m} - g^* \mid x_{1:n}]] = E[(g^* - g) \cdot 0] = 0$$
+
+Therefore:
+
+$$E[(x_{n+m} - g)^2] = E[(x_{n+m} - g^*)^2] + E[(g^* - g)^2] \geq E[(x_{n+m} - g^*)^2]$$
+
+with equality when $g = g^*$.
+
+## Linear Predictors
+
+For general time series, computing $E[x_{n+m} \mid x_{1:n}]$ can be difficult. We often restrict attention to **linear predictors**:
+
+$$\hat{x}_{n+m}^n = \beta_0 + \sum_{k=1}^{n} \beta_k x_k$$
+
+### Best Linear Predictor
+
+The **best linear unbiased predictor (BLUP)** minimizes:
+
+$$E\left[\left(x_{n+m} - \beta_0 - \sum_{k=1}^{n}\beta_k x_k\right)^2\right]$$
+
+This leads to the **prediction equations** (assuming zero mean):
+
+$$E\left[\left(x_{n+m} - \sum_{k=1}^{n}\beta_k x_k\right)x_j\right] = 0, \quad j = 1, \ldots, n$$
+
+::: {.callout-note}
+## Gaussian Case
+For **Gaussian processes**, the conditional expectation IS linear:
+$$E[x_{n+m} \mid x_{1:n}] = \beta_0 + \sum_{k=1}^{n}\beta_k x_k$$
+
+So BLUP = MMSE predictor for Gaussian time series!
+:::
+
+## One-Step Ahead Prediction
+
+### Notation
+
+We use the shorthand:
+
+$$x_n^{n+m} := E[x_{n+m} \mid x_{1:n}]$$
+
+for the $m$-step ahead forecast made at time $n$.
+
+**Special case**: $x_n^{n+1}$ is the **one-step ahead forecast**.
+
+### Prediction Error
+
+Define the **prediction error**:
+
+$$e_{n+m}^n = x_{n+m} - x_n^{n+m}$$
+
+The **mean squared prediction error (MSPE)** is:
+
+$$\text{MSPE}(m) = E[(e_{n+m}^n)^2] = E[(x_{n+m} - x_n^{n+m})^2]$$
+
+## Forecasting AR(1) Models
+
+Consider: $x_t = \phi x_{t-1} + w_t$ with $|\phi| < 1$
+
+### One-Step Ahead
+
+Given $x_1, \ldots, x_n$, the one-step forecast is:
+
+$$x_n^{n+1} = E[x_{n+1} \mid x_{1:n}] = E[\phi x_n + w_{n+1} \mid x_{1:n}] = \phi x_n$$
+
+**Prediction error**:
+
+$$e_n^{n+1} = x_{n+1} - x_n^{n+1} = w_{n+1}$$
+
+**MSPE**:
+
+$$\text{MSPE}(1) = E[w_{n+1}^2] = \sigma_w^2$$
+
+### Two-Steps Ahead
+
+$$x_n^{n+2} = E[x_{n+2} \mid x_{1:n}] = E[\phi x_{n+1} + w_{n+2} \mid x_{1:n}]$$
+
+We don't know $x_{n+1}$, so we use its forecast:
+
+$$x_n^{n+2} = \phi E[x_{n+1} \mid x_{1:n}] = \phi x_n^{n+1} = \phi^2 x_n$$
+
+**Prediction error**:
+
+$$e_n^{n+2} = x_{n+2} - x_n^{n+2} = \phi w_{n+1} + w_{n+2}$$
+
+**MSPE**:
+
+$$\text{MSPE}(2) = E[(\phi w_{n+1} + w_{n+2})^2] = \sigma_w^2(1 + \phi^2)$$
+
+### m-Steps Ahead
+
+By induction:
+
+$$\boxed{x_n^{n+m} = \phi^m x_n}$$
+
+$$e_n^{n+m} = \sum_{j=0}^{m-1}\phi^j w_{n+m-j}$$
+
+$$\boxed{\text{MSPE}(m) = \sigma_w^2 \frac{1-\phi^{2m}}{1-\phi^2}}$$
+
+::: {.callout-tip}
+## Forecast Convergence
+As $m \to \infty$:
+- Forecast: $x_n^{n+m} \to 0$ (the mean)
+- MSPE: $\text{MSPE}(m) \to \frac{\sigma_w^2}{1-\phi^2} = \gamma(0)$ (the variance)
+
+Long-term forecasts revert to the mean with uncertainty equal to the unconditional variance!
+:::
+
+## Python: AR(1) Forecasting
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def forecast_ar1(x, phi, h_max=20):
+    """
+    Forecast AR(1) model h_max steps ahead
+    
+    Parameters:
+    -----------
+    x : array-like
+        Observed time series
+    phi : float
+        AR(1) coefficient
+    h_max : int
+        Maximum forecast horizon
+    
+    Returns:
+    --------
+    forecasts : array
+        Point forecasts for h=1, ..., h_max
+    se : array
+        Standard errors of forecasts
+    """
+    n = len(x)
+    x_n = x[-1]  # Last observation
+    
+    forecasts = np.zeros(h_max)
+    se = np.zeros(h_max)
+    
+    # Assume sigma_w = 1 for demonstration
+    sigma_w = 1.0
+    
+    for h in range(1, h_max + 1):
+        forecasts[h-1] = phi**h * x_n
+        se[h-1] = sigma_w * np.sqrt((1 - phi**(2*h)) / (1 - phi**2))
+    
+    return forecasts, se
+
+# Simulate AR(1) data
+np.random.seed(42)
+n = 100
+phi = 0.8
+x = np.zeros(n)
+x[0] = np.random.normal()
+
+for t in range(1, n):
+    x[t] = phi * x[t-1] + np.random.normal()
+
+# Forecast
+h_max = 30
+forecasts, se = forecast_ar1(x, phi, h_max)
+
+# 95% prediction intervals
+lower = forecasts - 1.96 * se
+upper = forecasts + 1.96 * se
+
+# Plot
+fig, ax = plt.subplots(figsize=(14, 6))
+
+# Historical data
+time_hist = np.arange(n)
+ax.plot(time_hist, x, 'o-', label='Observed', markersize=3)
+
+# Forecasts
+time_forecast = np.arange(n, n + h_max)
+ax.plot(time_forecast, forecasts, 'ro-', label='Forecast', markersize=4)
+
+# Prediction intervals
+ax.fill_between(time_forecast, lower, upper, alpha=0.3, color='red',
+                label='95% Prediction Interval')
+
+# Mean line
+ax.axhline(0, color='black', linestyle='--', linewidth=0.8, alpha=0.5,
+          label='Mean')
+
+ax.axvline(n-1, color='gray', linestyle=':', linewidth=1)
+ax.set_xlabel('Time')
+ax.set_ylabel('Value')
+ax.set_title(f'AR(1) Forecasting: φ = {phi}')
+ax.legend()
+ax.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Print forecast table
+print("\nForecast Table (first 10 steps):")
+print("Step | Forecast | Std Error | 95% PI")
+print("-" * 45)
+for h in range(min(10, h_max)):
+    print(f"{h+1:4d} | {forecasts[h]:8.4f} | {se[h]:9.4f} | "
+          f"[{lower[h]:7.4f}, {upper[h]:7.4f}]")
+```
+
+## Forecasting ARMA(p,q) Models
+
+For general ARMA$(p,q)$:
+
+$$x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + w_t + \theta_1 w_{t-1} + \cdots + \theta_q w_{t-q}$$
+
+### Recursive Forecasting Formula
+
+$$x_n^{n+m} = \sum_{j=1}^{p}\phi_j x_n^{n+m-j} + \sum_{j=m}^{q}\theta_j w_{n+m-j}$$
+
+where:
+- $x_n^{n+k} = x_{n+k}$ for $k \leq 0$ (use actual values from the past)
+- $w_n^{n+k} = 0$ for $k > 0$ (future innovations have expectation zero)
+- $w_n^{n+k} = x_{n+k} - x_n^{n+k}$ for $k \leq 0$ (use past residuals)
+
+::: {.callout-note}
+## Practical Implementation
+1. Estimate model parameters $\phi, \theta, \sigma_w^2$
+2. Compute residuals: $\hat{w}_t = x_t - \hat{x}_{t-1}^{t-1}$
+3. Use recursive formula with $\hat{w}_t$ for past residuals
+4. Set future $w_{t} = 0$ in expectation
+:::
+
+## Python: ARMA Forecasting
+
+```python
+from statsmodels.tsa.arima.model import ARIMA
+
+# Simulate ARMA(2,1) data
+np.random.seed(123)
+n = 200
+ar_params = [0.7, -0.3]
+ma_params = [0.5]
+
+from statsmodels.tsa.arima_process import ArmaProcess
+ar_coef = np.concatenate(([1], -np.array(ar_params)))
+ma_coef = np.concatenate(([1], np.array(ma_params)))
+process = ArmaProcess(ar_coef, ma_coef)
+data = process.generate_sample(nsample=n)
+
+# Split into train and test
+train = data[:180]
+test = data[180:]
+
+# Fit ARMA(2,1) model
+model = ARIMA(train, order=(2, 0, 1))
+fitted = model.fit()
+
+# Forecast
+forecast_result = fitted.forecast(steps=len(test))
+forecast_df = fitted.get_forecast(steps=len(test)).summary_frame()
+
+# Plot
+fig, axes = plt.subplots(2, 1, figsize=(14, 10))
+
+# Full series with forecast
+axes[0].plot(np.arange(len(train)), train, label='Training Data')
+axes[0].plot(np.arange(len(train), len(data)), test, 
+            label='Test Data', color='green')
+axes[0].plot(np.arange(len(train), len(data)), forecast_result, 
+            'ro-', label='Forecast', markersize=4)
+axes[0].fill_between(np.arange(len(train), len(data)),
+                     forecast_df['mean_ci_lower'],
+                     forecast_df['mean_ci_upper'],
+                     alpha=0.3, color='red')
+axes[0].axvline(len(train)-1, color='gray', linestyle=':', linewidth=1)
+axes[0].set_xlabel('Time')
+axes[0].set_ylabel('Value')
+axes[0].set_title('ARMA(2,1) Forecasting')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# Forecast errors
+errors = test - forecast_result
+axes[1].plot(errors, 'o-', markersize=4)
+axes[1].axhline(0, color='red', linestyle='--')
+axes[1].set_xlabel('Forecast Step')
+axes[1].set_ylabel('Forecast Error')
+axes[1].set_title('Forecast Errors')
+axes[1].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Compute RMSE and MAE
+rmse = np.sqrt(np.mean(errors**2))
+mae = np.mean(np.abs(errors))
+print(f"\nForecast Performance:")
+print(f"RMSE: {rmse:.4f}")
+print(f"MAE: {mae:.4f}")
+```
+
+## Forecast Accuracy Measures
+
+Common metrics for evaluating forecast performance:
+
+1. **Mean Absolute Error (MAE)**:
+   $$\text{MAE} = \frac{1}{h}\sum_{i=1}^{h}|x_{n+i} - x_n^{n+i}|$$
+
+2. **Root Mean Squared Error (RMSE)**:
+   $$\text{RMSE} = \sqrt{\frac{1}{h}\sum_{i=1}^{h}(x_{n+i} - x_n^{n+i})^2}$$
+
+3. **Mean Absolute Percentage Error (MAPE)**:
+   $$\text{MAPE} = \frac{100\%}{h}\sum_{i=1}^{h}\left|\frac{x_{n+i} - x_n^{n+i}}{x_{n+i}}\right|$$
+
+::: {.callout-tip}
+## Choosing a Metric
+- **MAE**: Less sensitive to outliers
+- **RMSE**: Penalizes large errors more heavily
+- **MAPE**: Scale-independent, good for comparing across series
+:::
+
+## Durbin-Levinson Algorithm
+
+For AR models, the **Durbin-Levinson algorithm** provides an efficient recursive method for computing one-step ahead forecasts.
+
+This algorithm simultaneously computes:
+1. One-step ahead forecasts
+2. PACF values
+3. Prediction error variances
+
+See [PACF notes](acf_pacf.qmd) for connection to partial autocorrelation.
+
+## Connection to Other Topics
+
+- [ARIMA Models](arima_models.qmd) - Models we forecast with
+- [ACF and PACF](acf_pacf.qmd) - Used in forecast variance formulas
+- [Model Diagnostics](diagnostics.qmd) - Check forecast residuals
+
+## Key Takeaways
+
+1. **Optimal forecast** = Conditional expectation: $E[x_{n+m} \mid x_{1:n}]$
+2. For **Gaussian processes**, optimal = linear predictor
+3. **AR(1) m-step forecast**: $x_n^{n+m} = \phi^m x_n$
+4. **Forecast uncertainty** increases with horizon $m$
+5. **Long-term forecasts** converge to the mean
+6. MSPE grows to unconditional variance as $m \to \infty$
+7. Use **residuals** to estimate past innovations in ARMA forecasting

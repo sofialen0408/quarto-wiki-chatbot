@@ -1,0 +1,75 @@
+---
+title: "Data Science Wiki"
+id: dswiki
+subtitle: Notes on high level data science concepts from derived from university lectures.
+toc: false
+---
+
+## Welcome 👋
+
+This page is a personal data science wiki designed to serve as a concise, concept-driven reference for topics in:
+
+-   Time series analysis
+-   Statistical modeling
+-   Machine learning
+-   Applied data science
+
+The notes are organized by concept rather than lecture, making it easy to jump between related ideas and build intuition over time.
+
+## How to use this wiki
+
+Each page is intentionally written to be:
+
+-   Succinct, with expanded explanations for more complex ideas
+
+-   Mathematically precise, using LaTeX for key definitions and results
+
+-   Practical, with Python code examples where helpful
+
+-   Interconnected, using internal links to related concepts
+
+This makes the wiki useful for:
+
+-   Reviewing course material
+
+-   Filling in conceptual gaps
+
+-   Quick refreshers before interviews or projects
+
+## Content areas
+
+### 📈 Time Series
+
+Topics include:
+
+-   Stationarity and dependence
+
+-   Autocovariance and autocorrelation
+
+-   AR, MA, and linear processes
+
+-   Random walks, differencing, and detrending
+
+-   Time series regression and model diagnostics
+
+### 🤖 Machine Learning
+
+Topics may include:
+
+-   Supervised and unsupervised learning
+
+-   Model evaluation and selection
+
+-   Bias–variance tradeoff
+
+-   Optimization and regularization
+
+-   Practical implementation details
+
+## Design philosophy
+
+-   Flat structure: each concept lives on its own page
+-   Wiki-style navigation: follow links, not a strict order
+-   Clarity over completeness: enough detail to understand why, not just how
+
+If you’re studying, building, or revisiting data science concepts, this wiki is meant to grow with you.

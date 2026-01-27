@@ -1,0 +1,513 @@
+---
+title: "Smoothing Methods for Time Series"
+date: 2026-01-26
+tags: [time-series, smoothing, filtering, lowess, kernel-smoothing]
+categories: [PSTAT 174, Preprocessing]
+---
+
+## Overview
+
+Smoothing methods extract trends and patterns from noisy time series data. They're essential for exploratory data analysis and preprocessing before model fitting.
+
+## Moving Average Smoothing
+
+### Symmetric Moving Average
+
+A **symmetric linear filter** applies weights to observations around time $t$:
+
+$$m_t = \sum_{j=-k}^{k} a_j x_{t-j}$$
+
+where:
+- $a_j = a_{-j}$ (symmetric weights)
+- $\sum_{j=-k}^{k} a_j = 1$ (preserves level)
+- $a_j \geq 0$ (all weights non-negative)
+
+::: {.callout-note}
+## Properties
+- **Smooths out** high-frequency fluctuations
+- **Preserves** low-frequency trends
+- **Symmetric** weights avoid phase shift
+- Acts as a **low-pass filter**
+:::
+
+### Simple Moving Average
+
+Equal weights: $a_j = \frac{1}{2k+1}$ for $j = -k, \ldots, k$
+
+$$m_t = \frac{1}{2k+1}\sum_{j=-k}^{k} x_{t-j}$$
+
+### Box-Car Filter (Seasonal Smoothing)
+
+For **monthly data** to remove annual effects:
+
+$$a_0 = a_1 = \cdots = a_5 = \frac{1}{12}, \quad a_6 = \frac{1}{24}$$
+
+This filter gives less weight to observations exactly 6 months away.
+
+$$m_t = \frac{1}{24}x_{t-6} + \frac{1}{12}\sum_{j=-5}^{5}x_{t-j} + \frac{1}{24}x_{t+6}$$
+
+::: {.callout-important}
+## Why Reduced Weight at ±6?
+The weights at lags ±6 are halved to give a balanced 12-month average:
+- Total weight = $2 \times \frac{1}{24} + 11 \times \frac{1}{12} = \frac{1}{12} + \frac{11}{12} = 1$ ✓
+- Removes annual seasonality while preserving trend
+:::
+
+## Python: Moving Average
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import uniform_filter1d
+
+def moving_average(x, window_size):
+    """
+    Compute centered moving average
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input time series
+    window_size : int
+        Window size (should be odd for symmetric filter)
+    
+    Returns:
+    --------
+    smoothed : array
+        Smoothed time series (same length as input, with NaNs at edges)
+    """
+    if window_size % 2 == 0:
+        window_size += 1  # Make odd
+    
+    # Use uniform (equal) weights
+    smoothed = uniform_filter1d(x, size=window_size, mode='constant', cval=np.nan)
+    
+    # Set edges to NaN
+    k = window_size // 2
+    smoothed[:k] = np.nan
+    smoothed[-k:] = np.nan
+    
+    return smoothed
+
+def boxcar_filter(x, period=12):
+    """
+    Apply box-car filter for seasonal data
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input time series
+    period : int
+        Seasonal period (default 12 for monthly data)
+    
+    Returns:
+    --------
+    smoothed : array
+        Smoothed series
+    """
+    n = len(x)
+    smoothed = np.full(n, np.nan)
+    
+    # Create weights
+    half_period = period // 2
+    
+    for t in range(half_period, n - half_period):
+        # Center value
+        total = 0.5 * x[t - half_period] + 0.5 * x[t + half_period]
+        # Intermediate values
+        for j in range(1, half_period):
+            total += x[t - half_period + j] + x[t + half_period - j]
+        total += x[t]
+        smoothed[t] = total / period
+    
+    return smoothed
+
+# Example: Generate synthetic seasonal data
+np.random.seed(42)
+n = 144  # 12 years of monthly data
+t = np.arange(n)
+
+# Components
+trend = 100 + 0.5 * t
+seasonal = 20 * np.sin(2 * np.pi * t / 12)
+noise = np.random.normal(0, 5, n)
+
+x = trend + seasonal + noise
+
+# Apply different smoothing methods
+ma_3 = moving_average(x, 3)
+ma_7 = moving_average(x, 7)
+boxcar = boxcar_filter(x, 12)
+
+# Plot
+fig, axes = plt.subplots(4, 1, figsize=(14, 12))
+
+# Original
+axes[0].plot(t, x, 'o-', markersize=2, alpha=0.6, label='Original')
+axes[0].set_ylabel('Value')
+axes[0].set_title('Original Time Series')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# MA(3)
+axes[1].plot(t, x, alpha=0.3, label='Original')
+axes[1].plot(t, ma_3, linewidth=2, color='C1', label='MA(3)')
+axes[1].set_ylabel('Value')
+axes[1].set_title('3-Point Moving Average')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+# MA(7)
+axes[2].plot(t, x, alpha=0.3, label='Original')
+axes[2].plot(t, ma_7, linewidth=2, color='C2', label='MA(7)')
+axes[2].set_ylabel('Value')
+axes[2].set_title('7-Point Moving Average')
+axes[2].legend()
+axes[2].grid(alpha=0.3)
+
+# Box-car filter
+axes[3].plot(t, x, alpha=0.3, label='Original')
+axes[3].plot(t, boxcar, linewidth=2, color='C3', label='Box-car (12-month)')
+axes[3].set_ylabel('Value')
+axes[3].set_xlabel('Time')
+axes[3].set_title('Box-Car Filter (Seasonal Smoothing)')
+axes[3].legend()
+axes[3].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Kernel Smoothing
+
+### Nadaraya-Watson Estimator
+
+**Kernel smoothing** uses a kernel function $K(\cdot)$ to weight nearby observations:
+
+$$m_t = \frac{\sum_{i=1}^{n} K\left(\frac{t-i}{b}\right) x_i}{\sum_{i=1}^{n} K\left(\frac{t-i}{b}\right)}$$
+
+where:
+- $K(\cdot)$ is the **kernel function** (typically unimodal, symmetric)
+- $b$ is the **bandwidth** (controls smoothness)
+
+### Common Kernel Functions
+
+1. **Gaussian kernel**:
+   $$K(u) = \frac{1}{\sqrt{2\pi}}e^{-u^2/2}$$
+
+2. **Epanechnikov kernel**:
+   $$K(u) = \frac{3}{4}(1-u^2)\mathbb{1}_{|u| \leq 1}$$
+
+3. **Uniform kernel**:
+   $$K(u) = \frac{1}{2}\mathbb{1}_{|u| \leq 1}$$
+
+::: {.callout-tip}
+## Bandwidth Selection
+- **Small $b$**: Less smoothing, follows data closely (high variance)
+- **Large $b$**: More smoothing, removes detail (high bias)
+- **Optimal $b$**: Balances bias-variance tradeoff
+- Rule of thumb: $b \approx 0.9 \cdot \min(\sigma, \text{IQR}/1.34) \cdot n^{-1/5}$
+:::
+
+## Python: Kernel Smoothing
+
+```python
+from scipy.ndimage import gaussian_filter1d
+from statsmodels.nonparametric.kernel_regression import KernelReg
+
+def kernel_smooth(x, bandwidth, kernel='gaussian'):
+    """
+    Apply kernel smoothing to time series
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input time series
+    bandwidth : float
+        Bandwidth parameter
+    kernel : str
+        Kernel type ('gaussian', 'epanechnikov', etc.)
+    
+    Returns:
+    --------
+    smoothed : array
+        Smoothed series
+    """
+    t = np.arange(len(x))
+    
+    # Use statsmodels KernelReg
+    kr = KernelReg(x, t, var_type='c', reg_type='ll', 
+                   bw=[bandwidth])
+    smoothed, _ = kr.fit(t)
+    
+    return smoothed
+
+# Example with SOI-like data
+np.random.seed(123)
+n = 200
+t = np.arange(n)
+
+# Simulate SOI-like oscillations
+x = 0.5 * np.sin(2 * np.pi * t / 50) + 0.3 * np.sin(2 * np.pi * t / 20)
+x += np.random.normal(0, 0.2, n)
+
+# Apply different bandwidths
+bandwidths = [1, 5, 10, 20]
+smoothed_curves = [kernel_smooth(x, bw) for bw in bandwidths]
+
+# Plot
+fig, axes = plt.subplots(len(bandwidths), 1, figsize=(14, 10))
+
+for idx, (bw, smooth) in enumerate(zip(bandwidths, smoothed_curves)):
+    axes[idx].plot(t, x, 'o', markersize=2, alpha=0.4, label='Data')
+    axes[idx].plot(t, smooth, linewidth=2, color='C1',
+                   label=f'Kernel Smooth (bw={bw})')
+    axes[idx].set_ylabel('Value')
+    axes[idx].set_title(f'Kernel Smoothing: Bandwidth = {bw}')
+    axes[idx].legend()
+    axes[idx].grid(alpha=0.3)
+    
+    if idx == len(bandwidths) - 1:
+        axes[idx].set_xlabel('Time')
+
+plt.tight_layout()
+plt.show()
+```
+
+## LOWESS: Locally Weighted Scatterplot Smoothing
+
+**LOWESS** (or LOESS) fits local polynomial regressions using weighted least squares.
+
+### Algorithm
+
+For each point $t$:
+
+1. Define **neighborhood**: Select $k$ nearest neighbors (or use bandwidth)
+2. Assign **weights**: Larger weights to closer points using a kernel
+3. **Fit polynomial**: Typically linear or quadratic via weighted least squares
+4. **Evaluate**: Use fitted model to predict $m_t$
+
+### Weight Function
+
+Tri-cube weight function:
+
+$$w_i(t) = \left(1 - \left|\frac{t-t_i}{d(t)}\right|^3\right)^3$$
+
+where $d(t)$ is the distance to the $k$-th nearest neighbor.
+
+::: {.callout-note}
+## Key Parameter
+**Span parameter $f$**: Fraction of data used in each local regression
+- $f = 0.05$: Very local, follows data closely (captures short-term variation)
+- $f = 0.5$: Moderate smoothing
+- $f = 2/3$: Default, smooth trend (removes most fluctuations)
+:::
+
+## Python: LOWESS
+
+```python
+from statsmodels.nonparametric.smoothers_lowess import lowess
+
+def apply_lowess(x, frac=0.1):
+    """
+    Apply LOWESS smoothing
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input time series
+    frac : float
+        Fraction of data used in local regression (0 < frac <= 1)
+    
+    Returns:
+    --------
+    smoothed : array
+        Smoothed series
+    """
+    t = np.arange(len(x))
+    smoothed = lowess(x, t, frac=frac, return_sorted=False)
+    return smoothed
+
+# Example: SOI-like data
+np.random.seed(456)
+n = 453  # Same length as SOI data
+t = np.arange(n) / 12  # Convert to years
+
+# Simulate El Niño-like oscillations
+el_nino_cycle = 0.3 * np.sin(2 * np.pi * t / 4)  # 4-year cycle
+trend = 0.02 * t  # Slight upward trend
+noise = np.random.normal(0, 0.5, n)
+
+x = el_nino_cycle + trend + noise
+
+# Apply LOWESS with different spans
+lowess_05 = apply_lowess(x, frac=0.05)  # Captures El Niño
+lowess_67 = apply_lowess(x, frac=2/3)   # Extracts trend
+
+# Plot
+fig, axes = plt.subplots(2, 1, figsize=(14, 8))
+
+# El Niño cycle emphasis
+axes[0].plot(t, x, alpha=0.4, label='Data')
+axes[0].plot(t, lowess_05, linewidth=2, color='blue',
+            label='LOWESS (f=0.05): El Niño Cycle')
+axes[0].set_ylabel('SOI')
+axes[0].set_title('LOWESS: Capturing Short-Term Cycles')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# Trend extraction
+axes[1].plot(t, x, alpha=0.4, label='Data')
+axes[1].plot(t, lowess_67, linewidth=2, color='red',
+            label='LOWESS (f=0.67): Trend')
+axes[1].set_xlabel('Years')
+axes[1].set_ylabel('SOI')
+axes[1].set_title('LOWESS: Extracting Long-Term Trend')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Smoothing Splines
+
+### Penalized Least Squares
+
+Smoothing splines minimize a penalized loss function:
+
+$$\min_{m} \left[\sum_{t=1}^{n}(x_t - m_t)^2 + \lambda \int (m''(t))^2 dt\right]$$
+
+where:
+- First term: **Fidelity to data** (residual sum of squares)
+- Second term: **Roughness penalty** (penalizes curvature)
+- $\lambda$: **Smoothing parameter** (controls tradeoff)
+
+::: {.callout-important}
+## Smoothing Parameter λ
+- $\lambda = 0$: No smoothing, $m_t = x_t$ (interpolation)
+- $\lambda = \infty$: Maximum smoothing, $m_t = c + dt$ (linear)
+- Intermediate $\lambda$: Balance fit and smoothness
+:::
+
+### Cubic Smoothing Splines
+
+For cubic splines: $m(t) = \beta_0 + \beta_1 t + \beta_2 t^2 + \beta_3 t^3$
+
+The second derivative: $m''(t) = 6\beta_3 t + 2\beta_2$
+
+The solution is a **natural cubic spline** with knots at all data points.
+
+## Python: Smoothing Splines
+
+```python
+from scipy.interpolate import UnivariateSpline
+
+def smoothing_spline(x, smoothing_param=None):
+    """
+    Apply cubic smoothing spline
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input time series
+    smoothing_param : float or None
+        Smoothing parameter (if None, uses cross-validation)
+    
+    Returns:
+    --------
+    smoothed : array
+        Smoothed series
+    """
+    t = np.arange(len(x))
+    
+    if smoothing_param is None:
+        # Cross-validation to select smoothing parameter
+        spline = UnivariateSpline(t, x, s=len(x))
+    else:
+        spline = UnivariateSpline(t, x, s=smoothing_param)
+    
+    smoothed = spline(t)
+    return smoothed
+
+# Example
+np.random.seed(789)
+n = 200
+t = np.arange(n)
+
+# Generate data with varying curvature
+x = 50 + 0.3 * t + 20 * np.sin(2 * np.pi * t / 40)
+x += np.random.normal(0, 3, n)
+
+# Different smoothing parameters (spar in R maps to s parameter)
+# Lower s = less smoothing, higher s = more smoothing
+spline_low = smoothing_spline(x, smoothing_param=50)
+spline_high = smoothing_spline(x, smoothing_param=500)
+
+# Plot
+fig, ax = plt.subplots(figsize=(14, 6))
+
+ax.plot(t, x, 'o', markersize=3, alpha=0.4, label='Data')
+ax.plot(t, spline_low, linewidth=2, color='blue',
+       label='Smoothing Spline (s=50)')
+ax.plot(t, spline_high, linewidth=2, color='red', linestyle='--',
+       label='Smoothing Spline (s=500)')
+
+ax.set_xlabel('Time')
+ax.set_ylabel('Value')
+ax.set_title('Cubic Smoothing Splines with Different Parameters')
+ax.legend()
+ax.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Comparison of Methods
+
+| Method | Pros | Cons | Best For |
+|--------|------|------|----------|
+| **Moving Average** | Simple, interpretable | Fixed window, edge effects | Quick smoothing, equal weights |
+| **Kernel Smoothing** | Flexible weights | Bandwidth selection | General purpose, local patterns |
+| **LOWESS** | Robust, adaptive | Computationally intensive | Irregular data, outliers |
+| **Smoothing Splines** | Optimal smoothness | Parameter tuning | Smooth curves, derivatives |
+
+::: {.callout-tip}
+## Choosing a Method
+
+**Use Moving Average when:**
+- Simple seasonal adjustment needed
+- Computational efficiency is important
+- Equal weighting is appropriate
+
+**Use Kernel Smoothing when:**
+- Want flexible, local smoothing
+- Can tune bandwidth systematically
+- Data is reasonably regular
+
+**Use LOWESS when:**
+- Data has outliers or irregular spacing
+- Want robust estimates
+- Need to capture local patterns
+
+**Use Smoothing Splines when:**
+- Need smooth, differentiable curves
+- Want automatic smoothness optimization
+- Interpolation between points matters
+:::
+
+## Connection to Other Topics
+
+- [Trend Stationarity](trend_stationarity.qmd) - Estimate and remove trends
+- [Model Diagnostics](diagnostics.qmd) - Visualize residual patterns
+- [Exploratory Analysis](eda.qmd) - Initial data exploration
+
+## Key Takeaways
+
+1. **Moving averages** are simple filters with equal (or symmetric) weights
+2. **Box-car filter** removes seasonality by averaging over full cycle
+3. **Kernel smoothing** uses weighted local averages with bandwidth $b$
+4. **LOWESS** fits local polynomials robustly (span parameter $f$)
+5. **Smoothing splines** minimize penalized least squares ($\lambda$ controls smoothness)
+6. Trade-off: **Smoothness vs. fidelity to data**
+7. All methods have parameters controlling **degree of smoothing**

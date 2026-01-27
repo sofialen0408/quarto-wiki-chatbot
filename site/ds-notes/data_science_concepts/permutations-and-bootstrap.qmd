@@ -1,0 +1,32 @@
+---
+title: "PSTAT 134 – Permutation and Bootstrap Procedures"
+author: "Sang‑Yun Oh"
+date: Winter 2026
+format: html
+---
+
+# Bootstrap Procedure
+
+1. Treat data as empirical distribution
+2. Draw **samples with replacement**
+3. Compute statistic for each sample
+4. Analyze distribution of statistics
+   - Standard error
+   - Confidence intervals
+
+---
+
+# Permutation Test
+
+1. Pool observations from two groups
+2. Randomly permute group labels
+3. Compute test statistic for each permutation
+4. Compare observed statistic to null distribution
+5. p-value: proportion of permutations exceeding observed
+
+---
+
+# Applications
+
+- Bootstrap: quantify uncertainty of estimates
+- Permutation: test hypotheses without parametric assumptions

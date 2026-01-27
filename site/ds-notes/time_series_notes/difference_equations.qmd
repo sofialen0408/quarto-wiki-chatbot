@@ -1,0 +1,326 @@
+---
+title: "Difference Equations for Computing ACF"
+date: 2026-01-26
+tags: [time-series, difference-equations, acf, theoretical]
+categories: [PSTAT 174, Mathematical Theory]
+---
+
+## Overview
+
+Difference equations provide a systematic way to compute the ACF of ARMA models. Understanding this theory is crucial for model identification and interpretation.
+
+## Motivation: Why Difference Equations?
+
+For a causal ARMA model, we need to find the ACF $\rho(h)$ without simulating data. Difference equations give us an algebraic method to compute $\rho(h)$ directly from model parameters.
+
+## AR(2) Difference Equation
+
+### Derivation
+
+Consider a causal AR(2) model:
+
+$$x_t = \phi_1 x_{t-1} + \phi_2 x_{t-2} + w_t, \quad t \in \mathbb{Z}$$
+
+where $w_t \sim \text{WN}(0, \sigma_w^2)$.
+
+**Step 1**: Multiply both sides by $x_{t-h}$ for $h > 0$:
+
+$$x_t x_{t-h} = \phi_1 x_{t-1}x_{t-h} + \phi_2 x_{t-2}x_{t-h} + w_t x_{t-h}$$
+
+**Step 2**: Take expectations:
+
+$$E[x_t x_{t-h}] = \phi_1 E[x_{t-1}x_{t-h}] + \phi_2 E[x_{t-2}x_{t-h}] + E[w_t x_{t-h}]$$
+
+**Step 3**: Use the MA($\infty$) representation. Since the model is causal:
+
+$$x_{t-h} = \sum_{j=0}^{\infty} \psi_j w_{t-h-j}$$
+
+Therefore, for $h > 0$:
+
+$$E[w_t x_{t-h}] = E\left[w_t \sum_{j=0}^{\infty} \psi_j w_{t-h-j}\right] = 0$$
+
+because $w_t$ is uncorrelated with $w_{t-h-j}$ for all $j \geq 0$.
+
+**Step 4**: Substitute $\gamma(h) = E[x_t x_{t-h}]$:
+
+$$\gamma(h) = \phi_1 \gamma(h-1) + \phi_2 \gamma(h-2), \quad h \geq 1$$
+
+**Step 5**: Divide by $\gamma(0)$ to get the ACF:
+
+$$\boxed{\rho(h) = \phi_1 \rho(h-1) + \phi_2 \rho(h-2), \quad h \geq 1}$$
+
+with initial conditions $\rho(0) = 1$ and $\rho(1) = \frac{\phi_1}{1-\phi_2}$.
+
+::: {.callout-important}
+## Key Insight
+The difference equation for ACF is the **same form** as the AR equation, but applies to correlations rather than the series itself!
+:::
+
+## Solving Linear Difference Equations
+
+The general second-order homogeneous linear difference equation:
+
+$$\rho(h) - \phi_1\rho(h-1) - \phi_2\rho(h-2) = 0$$
+
+has solutions determined by the **characteristic equation**:
+
+$$z^2 - \phi_1 z - \phi_2 = 0$$
+
+or equivalently, using the AR polynomial $\phi(z) = 1 - \phi_1 z - \phi_2 z^2$:
+
+$$\phi(1/z) = 0$$
+
+The roots are:
+
+$$z_{\pm} = \frac{\phi_1 \pm \sqrt{\phi_1^2 + 4\phi_2}}{2\phi_2}$$
+
+### Three Cases
+
+#### Case 1: Real Distinct Roots
+
+When $\phi_1^2 + 4\phi_2 > 0$, we have two real distinct roots $z_+$ and $z_-$:
+
+$$\boxed{\rho(h) = c_+ z_+^{-h} + c_- z_-^{-h}, \quad h \geq 0}$$
+
+The constants $c_+$ and $c_-$ are determined by initial conditions $\rho(0) = 1$ and $\rho(1)$.
+
+**Behavior**: Exponential decay (mixture of two geometric sequences).
+
+#### Case 2: Real Repeated Root
+
+When $\phi_1^2 + 4\phi_2 = 0$, we have one repeated root $z_0$:
+
+$$\boxed{\rho(h) = z_0^{-h}(c_0 + c_1 h), \quad h \geq 0}$$
+
+**Behavior**: Exponential decay with polynomial correction.
+
+#### Case 3: Complex Conjugate Roots
+
+When $\phi_1^2 + 4\phi_2 < 0$, we have complex conjugate roots $z_{\pm} = re^{\pm i\omega}$:
+
+$$z_+ = |z_+|e^{i\omega}, \quad z_- = |z_+|e^{-i\omega}$$
+
+The general solution is:
+
+$$\rho(h) = c_+ z_+^{-h} + c_- z_-^{-h}$$
+
+Using Euler's formula and the fact that $c_- = \overline{c_+}$:
+
+$$\boxed{\rho(h) = a|z_+|^{-h}\cos(\omega h + b), \quad h \geq 0}$$
+
+where $a$ and $b$ are constants determined by initial conditions.
+
+::: {.callout-note}
+## Damped Oscillation
+Complex roots produce a **damped sinusoidal pattern** in the ACF:
+- Amplitude decays as $|z_+|^{-h}$
+- Oscillates with frequency $\omega$
+- **Pseudo-period**: $T = \frac{2\pi}{\omega}$
+:::
+
+## Python: Solving Difference Equations
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def solve_ar2_acf(phi1, phi2, max_lag=30):
+    """
+    Solve AR(2) difference equation for ACF
+    
+    Parameters:
+    -----------
+    phi1, phi2 : float
+        AR(2) coefficients
+    max_lag : int
+        Maximum lag to compute
+    
+    Returns:
+    --------
+    rho : array
+        ACF values from lag 0 to max_lag
+    """
+    # Initialize ACF array
+    rho = np.zeros(max_lag + 1)
+    rho[0] = 1.0
+    
+    # Compute rho(1) from Yule-Walker equations
+    # For AR(2): rho(1) = phi1 / (1 - phi2)
+    rho[1] = phi1 / (1 - phi2)
+    
+    # Use difference equation for h >= 2
+    for h in range(2, max_lag + 1):
+        rho[h] = phi1 * rho[h-1] + phi2 * rho[h-2]
+    
+    return rho
+
+def analyze_ar2_roots(phi1, phi2):
+    """
+    Analyze roots of AR(2) characteristic equation
+    """
+    # Coefficients of phi(z) = 1 - phi1*z - phi2*z^2
+    # Characteristic equation: z^2 - phi1*z - phi2 = 0
+    poly_coef = [1, -phi1, -phi2]
+    roots = np.roots(poly_coef)
+    
+    print(f"AR(2) Model: x_t = {phi1}*x_{{t-1}} + {phi2}*x_{{t-2}} + w_t")
+    print(f"Characteristic equation roots: {roots}")
+    print(f"Magnitude of roots: {np.abs(roots)}")
+    
+    discriminant = phi1**2 + 4*phi2
+    
+    if discriminant > 0:
+        print("Case 1: Real distinct roots")
+        print(f"ACF form: c₊/z₊^h + c₋/z₋^h (exponential decay)")
+    elif discriminant == 0:
+        print("Case 2: Real repeated root")
+        print(f"ACF form: z₀^(-h)*(c₀ + c₁*h) (exponential with polynomial)")
+    else:
+        print("Case 3: Complex conjugate roots")
+        omega = np.angle(roots[0])
+        period = 2 * np.pi / abs(omega)
+        print(f"ACF form: a*|z|^(-h)*cos(ωh + b) (damped oscillation)")
+        print(f"Pseudo-period: {period:.2f} time units")
+    
+    print("\n")
+    return roots
+
+# Example 1: Real roots
+phi1, phi2 = 1.2, -0.5
+roots = analyze_ar2_roots(phi1, phi2)
+rho1 = solve_ar2_acf(phi1, phi2)
+
+# Example 2: Complex roots (from lecture)
+phi1, phi2 = 1.5, -0.75
+roots = analyze_ar2_roots(phi1, phi2)
+rho2 = solve_ar2_acf(phi1, phi2)
+
+# Plot
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+axes[0].stem(range(len(rho1)), rho1, basefmt=' ')
+axes[0].set_title(f'ACF: AR(2) with Real Roots\nφ₁={1.2}, φ₂={-0.5}')
+axes[0].set_xlabel('Lag')
+axes[0].set_ylabel('ACF')
+axes[0].axhline(0, color='black', linewidth=0.8)
+
+axes[1].stem(range(len(rho2)), rho2, basefmt=' ')
+axes[1].set_title(f'ACF: AR(2) with Complex Roots\nφ₁={1.5}, φ₂={-0.75}')
+axes[1].set_xlabel('Lag')
+axes[1].set_ylabel('ACF')
+axes[1].axhline(0, color='black', linewidth=0.8)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Example: AR(2) with Complex Roots
+
+From the lecture: $x_t = 1.5x_{t-1} - 0.75x_{t-2} + w_t$
+
+**Characteristic equation**: $z^2 - 1.5z - (-0.75) = 0$
+
+$$z^2 - 1.5z + 0.75 = 0$$
+
+**Discriminant**: $\Delta = 1.5^2 - 4(0.75) = 2.25 - 3 = -0.75 < 0$
+
+So we have complex roots!
+
+$$z = \frac{1.5 \pm \sqrt{-0.75}}{2} = \frac{1.5 \pm i\sqrt{0.75}}{2}$$
+
+In polar form:
+
+$$z_+ = \frac{2}{\sqrt{3}}e^{i\pi/6} = \frac{2}{\sqrt{3}}\left(\cos\frac{\pi}{6} + i\sin\frac{\pi}{6}\right)$$
+
+- Modulus: $|z_+| = \frac{2}{\sqrt{3}} \approx 1.155$
+- Argument: $\omega = \frac{\pi}{6}$ radians = 30°
+- **Pseudo-period**: $T = \frac{2\pi}{\pi/6} = 12$ time units
+
+::: {.callout-tip}
+## Interpreting the Pseudo-Period
+A pseudo-period of 12 means the ACF oscillates with a cycle length of about 12 time units. In the lecture example with monthly data, this corresponds to an **annual cycle**.
+:::
+
+## General ARMA(p,q) Case
+
+For a causal ARMA$(p,q)$ model, the ACF satisfies:
+
+$$\boxed{\rho(h) - \phi_1\rho(h-1) - \cdots - \phi_p\rho(h-p) = 0, \quad h \geq \max(p, q+1)}$$
+
+**Initial conditions** (for $0 \leq h < \max(p, q+1)$):
+
+$$\gamma(h) - \sum_{j=1}^{p}\phi_j\gamma(h-j) = \sigma_w^2\sum_{j=h}^{q}\theta_j\psi_{j-h}$$
+
+where $\psi_j$ are the MA$(\infty)$ coefficients from the causal representation.
+
+::: {.callout-warning}
+## Complexity Increases
+For ARMA$(p,q)$ with $q > 0$, computing the initial conditions requires solving a system of equations involving both $\phi$ and $\theta$ parameters.
+:::
+
+## Python: ARMA ACF Computation
+
+```python
+from statsmodels.tsa.arima_process import arma_acf
+
+def compare_acf_methods(ar_params, ma_params, max_lag=30):
+    """
+    Compare theoretical ACF with simulated ACF
+    """
+    # Theoretical ACF
+    acf_theory = arma_acf(ar=ar_params, ma=ma_params, nobs=max_lag+1)
+    
+    # Simulated ACF
+    from statsmodels.tsa.arima_process import ArmaProcess
+    ar_coef = np.concatenate(([1], -ar_params))
+    ma_coef = np.concatenate(([1], ma_params))
+    process = ArmaProcess(ar_coef, ma_coef)
+    data = process.generate_sample(nsample=10000)
+    
+    from statsmodels.tsa.stattools import acf as sample_acf
+    acf_sample = sample_acf(data, nlags=max_lag)
+    
+    # Plot comparison
+    fig, ax = plt.subplots(figsize=(12, 5))
+    
+    lags = np.arange(max_lag + 1)
+    ax.stem(lags - 0.1, acf_theory, linefmt='C0-', markerfmt='C0o', 
+            basefmt=' ', label='Theoretical')
+    ax.stem(lags + 0.1, acf_sample, linefmt='C1-', markerfmt='C1s', 
+            basefmt=' ', label='Sample (n=10000)')
+    
+    ax.axhline(0, color='black', linewidth=0.8)
+    ax.set_xlabel('Lag')
+    ax.set_ylabel('ACF')
+    ax.set_title('Theoretical vs Sample ACF')
+    ax.legend()
+    ax.grid(alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return acf_theory, acf_sample
+
+# Example: ARMA(1,1)
+ar_params = np.array([0.7])
+ma_params = np.array([0.4])
+acf_theory, acf_sample = compare_acf_methods(ar_params, ma_params)
+```
+
+## Connection to Other Topics
+
+- [ACF and PACF](acf_pacf.qmd) - Using ACF for model identification
+- [ARIMA Models](arima_models.qmd) - Models whose ACF we compute
+- [Forecasting](forecasting.qmd) - ACF determines forecast accuracy
+
+## Key Takeaways
+
+1. **Difference equations** allow analytic computation of ACF
+2. For AR$(p)$: $\rho(h) = \phi_1\rho(h-1) + \cdots + \phi_p\rho(h-p)$, $h \geq 1$
+3. **Three solution types** based on characteristic roots:
+   - Real distinct → exponential decay
+   - Real repeated → exponential with polynomial
+   - Complex conjugate → **damped oscillation**
+4. **Complex roots** produce sinusoidal ACF with pseudo-period $T = 2\pi/\omega$
+5. For ARMA$(p,q)$: Same difference equation but more complex initial conditions
+6. ACF always **decays exponentially** for causal ARMA models

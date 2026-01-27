@@ -1,0 +1,247 @@
+---
+title: "Box-Cox and Logarithmic Transformations"
+date: 2026-01-26
+tags: [time-series, transformations, box-cox, variance-stabilization]
+categories: [PSTAT 174, Preprocessing]
+---
+
+## Overview
+
+Transformations stabilize variance and improve normality assumptions in time series data. The two main approaches are logarithmic and power (Box-Cox) transformations.
+
+## Logarithmic Transform
+
+The simplest variance-stabilizing transformation:
+
+$$y_t = \log(x_t), \quad t \in \mathbb{Z}$$
+
+::: {.callout-note}
+## When to Use Log Transform
+- Data shows **multiplicative** seasonal effects
+- Variance increases with the level of the series
+- All values must be **positive** ($x_t > 0$)
+:::
+
+### Properties
+
+- Converts multiplicative relationships to additive
+- Stabilizes exponential growth
+- Natural interpretation: log-differences ≈ percentage changes
+
+$$\log(x_t) - \log(x_{t-1}) = \log\left(\frac{x_t}{x_{t-1}}\right) \approx \frac{x_t - x_{t-1}}{x_{t-1}}$$
+
+## Box-Cox Transformation
+
+A family of power transformations parameterized by $\lambda$:
+
+$$y_t = \begin{cases}
+\frac{x_t^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0 \\
+\log(x_t) & \text{if } \lambda = 0
+\end{cases}$$
+
+::: {.callout-important}
+## Key Feature
+The Box-Cox transformation is **continuous in** $\lambda$ at $\lambda = 0$:
+
+$$\lim_{\lambda \to 0} \frac{x_t^\lambda - 1}{\lambda} = \log(x_t)$$
+
+This can be verified using L'Hôpital's rule.
+:::
+
+### Common Values of λ
+
+| $\lambda$ | Transformation | Use Case |
+|-----------|---------------|----------|
+| 2 | $x_t^2$ | Amplify large values |
+| 1 | $x_t$ (identity) | No transformation needed |
+| 0.5 | $\sqrt{x_t}$ | Moderate variance stabilization |
+| 0 | $\log(x_t)$ | Strong variance stabilization |
+| -0.5 | $1/\sqrt{x_t}$ | Inverse square root |
+| -1 | $1/x_t$ | Reciprocal |
+
+## Benefits of Transformations
+
+1. **Stabilize variance** - Makes variance constant over time
+2. **Improve normality** - Residuals closer to Gaussian distribution
+3. **Linearize relationships** - Simplifies modeling
+4. **Symmetric residuals** - Better statistical properties
+
+## Python Implementation
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+def box_cox_transform(x, lmbda):
+    """
+    Apply Box-Cox transformation
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input data (must be positive)
+    lmbda : float
+        Transformation parameter
+    
+    Returns:
+    --------
+    transformed : array-like
+        Transformed data
+    """
+    if lmbda == 0:
+        return np.log(x)
+    else:
+        return (x**lmbda - 1) / lmbda
+
+def find_optimal_lambda(x, lambda_range=(-2, 2)):
+    """
+    Find optimal lambda using maximum likelihood
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input data (must be positive)
+    lambda_range : tuple
+        Range of lambda values to search
+    
+    Returns:
+    --------
+    optimal_lambda : float
+    transformed_data : array
+    """
+    # Use scipy's built-in function
+    transformed, optimal_lambda = stats.boxcox(x)
+    return optimal_lambda, transformed
+
+# Example: Glacial Varves data simulation
+np.random.seed(123)
+n = 100
+
+# Simulate right-skewed data (like varve thickness)
+x = np.random.gamma(shape=2, scale=10, size=n)
+
+# Try different lambda values
+lambdas = [-1, -0.5, 0, 0.5, 1]
+fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+axes = axes.ravel()
+
+# Original data
+axes[0].hist(x, bins=20, edgecolor='black', alpha=0.7)
+axes[0].set_title(f'Original Data\nSkew: {stats.skew(x):.2f}')
+axes[0].set_ylabel('Frequency')
+
+# Transformed data
+for i, lmbda in enumerate(lambdas, start=1):
+    x_transformed = box_cox_transform(x, lmbda)
+    axes[i].hist(x_transformed, bins=20, edgecolor='black', alpha=0.7)
+    axes[i].set_title(f'λ = {lmbda}\nSkew: {stats.skew(x_transformed):.2f}')
+    if i >= 3:
+        axes[i].set_xlabel('Transformed Value')
+    if i % 3 == 1:
+        axes[i].set_ylabel('Frequency')
+
+plt.tight_layout()
+plt.show()
+
+# Find optimal lambda
+optimal_lambda, x_optimal = find_optimal_lambda(x)
+print(f"Optimal λ: {optimal_lambda:.3f}")
+```
+
+## Example: Variance Stabilization
+
+```python
+import pandas as pd
+
+# Simulate data with increasing variance
+np.random.seed(42)
+t = np.arange(200)
+trend = 10 + 0.1 * t
+seasonal = 5 * np.sin(2 * np.pi * t / 12)
+# Variance increases with level
+noise = np.random.normal(0, 0.1 * trend, len(t))
+x = trend + seasonal + noise
+
+# Apply transformations
+x_log = np.log(x)
+x_sqrt = np.sqrt(x)
+
+# Plot
+fig, axes = plt.subplots(3, 1, figsize=(12, 8))
+
+axes[0].plot(t, x)
+axes[0].set_title('Original Series (Increasing Variance)')
+axes[0].set_ylabel('Value')
+
+axes[1].plot(t, x_log)
+axes[1].set_title('Log-Transformed')
+axes[1].set_ylabel('log(Value)')
+
+axes[2].plot(t, x_sqrt)
+axes[2].set_title('Square-Root Transformed')
+axes[2].set_ylabel('√Value')
+axes[2].set_xlabel('Time')
+
+plt.tight_layout()
+plt.show()
+
+# Check variance in rolling windows
+window_size = 20
+original_var = pd.Series(x).rolling(window_size).var().mean()
+log_var = pd.Series(x_log).rolling(window_size).var().mean()
+sqrt_var = pd.Series(x_sqrt).rolling(window_size).var().mean()
+
+print(f"Average rolling variance:")
+print(f"Original: {original_var:.4f}")
+print(f"Log: {log_var:.4f}")
+print(f"Sqrt: {sqrt_var:.4f}")
+```
+
+## Choosing the Right Transformation
+
+::: {.callout-tip}
+## Decision Guide
+
+**Use logarithmic transformation when:**
+- Variance increases proportionally with the level
+- Data spans multiple orders of magnitude
+- Multiplicative effects are present
+
+**Use Box-Cox transformation when:**
+- Optimal $\lambda$ is unknown
+- You want data-driven variance stabilization
+- Need to optimize normality of residuals
+
+**No transformation needed when:**
+- Variance appears constant
+- Data is already approximately normal
+- $\lambda \approx 1$ from Box-Cox analysis
+:::
+
+## Important Considerations
+
+1. **All values must be positive** for both transformations
+2. **Interpretation changes** after transformation
+3. **Back-transformation** needed for forecasts:
+   - Log: $\hat{x}_t = \exp(\hat{y}_t)$
+   - Box-Cox: $\hat{x}_t = (\lambda \hat{y}_t + 1)^{1/\lambda}$
+
+::: {.callout-warning}
+## Bias in Back-Transformation
+When back-transforming forecasts, consider **Jensen's inequality**: $E[e^Y] \neq e^{E[Y]}$ for log transforms. Adjust for bias when needed.
+:::
+
+## Connection to Other Topics
+
+- [Trend Stationarity](trend_stationarity.qmd) - Often combined with detrending
+- [Model Diagnostics](diagnostics.qmd) - Check if transformation improved residuals
+- [ARIMA Models](arima_models.qmd) - Applied before model fitting
+
+## Key Takeaways
+
+1. Transformations **stabilize variance** and **improve normality**
+2. **Log transform**: $\lambda = 0$ in Box-Cox family
+3. **Box-Cox**: Choose $\lambda$ by maximum likelihood
+4. Apply transformation **before** differencing in ARIMA
+5. Always **back-transform** for interpretation and forecasting

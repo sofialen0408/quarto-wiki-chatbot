@@ -16,7 +16,7 @@ website:
   page-footer:
     center:
       - text: "Our Team & POC Guide"
-        href: site/employee-resources/pa-resources/our-team-poc-guide/main.qmd
+        # href: site/employee-resources/pa-resources/our-team-poc-guide/main.qmd
     right:
       - icon: github
         href: https://posit.co/
@@ -33,6 +33,8 @@ website:
         href: site/data-products-use-cases/main.qmd
       - text: Technology & Analytics References
         href: site/technology-analytics-references/main.qmd
+      - text: Data Science Wiki
+        href: site/ds-notes/main.qmd
     foreground: "#7B7B7D"
     tools:
       - icon: github
@@ -121,6 +123,76 @@ website:
       - text: "---"
       - text: "Data Science Articles & Resources"
         href: site/technology-analytics-references/Data Processing/Data-Science-Articles.qmd
+  - id: dswiki
+    title: "Data Science Wiki"
+    collapse-level: 2
+    contents:
+      - text: "Data Science Wiki Overview"
+        href: site/ds-notes/main.qmd
+      - section: "Advance Data Science Concepts"
+        contents:
+          - text: "PSTAT 134 – What is Data Science?"
+            href: site/ds-notes/data_science_concepts/what-is-data-science.qmd
+          - text: "---"
+          - text: "PSTAT 134 – Histograms and Resampling"
+            href: site/ds-notes/data_science_concepts/histograms-and-resampling.qmd
+          - text: "---"
+          - text: "PSTAT 134 – Permutation and Bootstrap Procedures"
+            href: site/ds-notes/data_science_concepts/permutations-and-bootstrap.qmd
+          - text: "---"
+          - text: "PSTAT 134 – Linear Algebra for Data Science (Part 1)"
+            href: site/ds-notes/data_science_concepts/linear-algebra-for-data-science-1.qmd
+          - text: "---"
+          - text: "PSTAT 134 – Linear Algebra for Data Science (Part 2)" 
+            href: site/ds-notes/data_science_concepts/linear-algebra-for-data-science-2.qmd
+      - text: "---"
+      - section: "Time Series"
+        contents: 
+          - text: "ACF and PACF: Model Identification Tools"
+            href: site/ds-notes/time_series_notes/acf_pacf.qmd
+          - text: "---"
+          - text: "Autocorrelation Function (ACF)"
+            href: site/ds-notes/time_series_notes/autocorrelation.qmd
+          - text: "---"
+          - text: "ARIMA Models: Theory and Implementation"
+            href: site/ds-notes/time_series_notes/arima_models.qmd
+          - text: "---"
+          - text: "Autocovariance Function"
+            href: site/ds-notes/time_series_notes/autocovariance.qmd
+          - text: "---"
+          - text: "Model Diagnostics and Residual Analysis"
+            href: site/ds-notes/time_series_notes/diagnostics.qmd
+          - text: "---"
+          - text : "Difference Equations for Computing ACF"
+            href: site/ds-notes/time_series_notes/difference_equations.qmd
+          - text: "---"
+          - text: "Exploratory Data Analysis for Time Series"
+            href: site/ds-notes/time_series_notes/eda.qmd
+          - text: "---"
+          - text: "Forecasting with Time Series Models"
+            href: site/ds-notes/time_series_notes/forecasting.qmd
+          - text: "---"
+          - text: "Moving Average Process"
+            href: site/ds-notes/time_series_notes/moving-average.qmd
+          - text: "---"
+          - text: "Smoothing Methods for Time Series"
+            href: site/ds-notes/time_series_notes/smoothing_methods.qmd
+          - text: "---"
+          - text: "Stationarity"
+            href: site/ds-notes/time_series_notes/stationarity.qmd
+          - text: "---"
+          - text: "Box-Cox and Logarithmic Transformations"
+            href: site/ds-notes/time_series_notes/transformations.qmd
+          - text: "---"
+          - text: "Trend Stationarity & Differencing"
+            href: site/ds-notes/time_series_notes/trend_stationarity.qmd
+          - text: "---"
+          - text: "White Noise"
+            href: site/ds-notes/time_series_notes/white-noise.qmd
+
+
+
+
 
   draft-mode: visible
 

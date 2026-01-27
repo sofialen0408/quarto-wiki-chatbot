@@ -1,0 +1,46 @@
+---
+title: "PSTAT 134 – Histograms and Resampling"
+author: "Sang‑Yun Oh"
+date: Winter 2026
+format: html
+---
+
+# Histograms
+
+## Definition
+A **histogram** visualizes the distribution of a numeric variable using **bins**.
+
+- Shows shape, spread, central tendency, and outliers.
+- Bins and bin width affect interpretation.
+
+### Interpretation
+- Symmetric: roughly equal around center
+- Right-skewed: tail to the right
+- Left-skewed: tail to the left
+- Multi-modal: multiple peaks
+
+---
+
+# Resampling
+
+## Definition
+Resampling involves **drawing samples repeatedly from observed data** to estimate variability or generate null distributions.
+
+### Bootstrap
+- Sampling **with replacement**
+- Compute statistic on each bootstrap sample
+- Use distribution of statistics for:
+  - Standard errors
+  - Confidence intervals
+  - Variability estimates
+
+### Permutation Test
+- Sampling **without replacement**
+- Randomly shuffle labels
+- Compute test statistic
+- Compare observed statistic to null distribution
+
+---
+
+## Connection
+Histograms can visualize **resampled distributions**, making abstract sampling variability tangible.

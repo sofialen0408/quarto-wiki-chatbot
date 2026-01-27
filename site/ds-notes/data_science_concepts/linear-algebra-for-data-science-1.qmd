@@ -1,0 +1,25 @@
+---
+title: "PSTAT 134 – Linear Algebra for Data Science (Part 1)"
+author: "Sang‑Yun Oh"
+date: Winter 2026
+format: html
+---
+
+# Linear Algebra for Data Science
+
+## Single Factor Representation
+- Data vector $x_i \approx q_i v$
+- Matrix form: $X \approx q v^T$
+
+## Multiple Factor Representation
+- Extend to k factors:
+
+$$X \approx Q V^T$$
+
+
+## Key Concepts
+- Subspace, span, linear combination
+- Linear independence, basis
+- Dimension & rank
+- Matrix factorization
+- PCA as rank-k approximation

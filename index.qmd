@@ -52,11 +52,7 @@ Welcome to the Team Wiki!
 ::: grid
 :::
 
-
-
-
-
-::::::: alt-background
+::::::::::::::::::::::: alt-background
 :::::: content-block
 ::: section-h1
 Data Products & Use Cases
@@ -93,7 +89,7 @@ This section will cover our management & governance of the various People Analyt
 ```
 
 ::: content-block
-Coming Soon!
+[Learn More \>\>](site/data-products-use-cases/main.qmd)
 :::
 
 ````{=html}
@@ -241,8 +237,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 ::: grid
 :::
-::::::: alt-background
 
+::::::: alt-background
 :::::: content-block
 ::: section-h1
 Technology & Analytics References
@@ -253,7 +249,7 @@ Contains non-OCHCO specific technical resources, including tutorials.
 :::
 
 ::: content-block
-Coming Soon!
+[Learn More \>\>](site/technology-analytics-references/main.qmd)
 :::
 
 ```{=html}
@@ -326,6 +322,20 @@ Guidelines and examples surrounding data visualization.
 
 :::::: content-block
 ::: section-h1
+Data Science Wiki
+:::
+
+::: section-h2
+Notes on high level data science concepts from derived from university lectures.
+:::
+
+::: content-block
+[Learn More \>\>](site/ds-notes/main.qmd)
+:::
+::::::
+
+:::::: content-block
+::: section-h1
 PA Knowledge Base Search
 :::
 
@@ -334,7 +344,7 @@ Use our LLM-assisted search tool for quick answers!
 :::
 
 ::: content-block
-[Learn more »](site/quarto_llm/main.qmd)
+[Learn More \>\>](site/quarto_llm/main.qmd)
 :::
 ::::::
 
@@ -352,3 +362,4 @@ Use our LLM-assisted search tool for quick answers!
 ```
 :::
 ::::
+:::::::::::::::::::::::

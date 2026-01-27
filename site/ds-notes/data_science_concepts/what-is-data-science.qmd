@@ -1,0 +1,64 @@
+---
+title: "PSTAT 134 – What is Data Science?"
+author: "Sang‑Yun Oh"
+date: Winter 2026
+format: html
+---
+
+# What is Data Science?
+
+## Definition
+Data science is a **multi-disciplinary field** that uses scientific methods, processes, algorithms, and systems to extract **knowledge and insights** from both structured and unstructured data. It merges elements of:
+
+- Statistics
+- Data analysis
+- Machine learning
+- Computer science
+- Information science
+
+---
+
+## Core Components
+
+### Domain Understanding
+- Knowing what questions to ask
+- Understanding the meaning of the data
+- Interpreting and communicating results
+
+### Math & Statistics
+- Data collection
+- Exploration
+- Modeling
+- Inference
+
+### Machine Learning
+- Prediction
+- Classification
+- Pattern recognition
+
+### Computer Science
+- Data storage
+- Retrieval
+- Processing at scale
+
+---
+
+## Example: Google Ads
+- Auction-based system
+- Metrics: impressions, clicks, cost, conversions, ROI
+- Use of algorithms to optimize ad delivery
+
+---
+
+## Data Science Process
+1. Problem definition
+2. Data collection and processing
+3. Feature engineering
+4. Modeling
+5. Evaluation
+6. Communication
+
+---
+
+## Summary
+Data science converts **data into actionable insights** using statistical reasoning, computational tools, and domain understanding while handling complex real-world data.

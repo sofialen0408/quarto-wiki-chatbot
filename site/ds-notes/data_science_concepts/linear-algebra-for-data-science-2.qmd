@@ -1,0 +1,32 @@
+---
+title: "PSTAT 134 – Linear Algebra for Data Science (Part 2)"
+author: "Sang‑Yun Oh"
+date: Winter 2026
+format: html
+---
+
+# Linear Algebra – Part 2
+
+## Eigenvalues and Eigenvectors
+- $A v = \lambda v$
+- Eigenvalues: scale factors
+- Eigenvectors: directions of stretch
+
+## Spectral Decomposition
+- Symmetric $A = Q \Lambda Q^T$
+- Diagonalization simplifies computation
+
+## Singular Value Decomposition (SVD)
+- $M = U \Sigma V^T$
+- Decomposes any matrix into rotations + scaling
+- Basis for low-rank approximation
+
+## PCA via SVD
+- Project data onto directions of max variance
+- Scores = UΣ, components = V
+- Rank-k approximations for dimensionality reduction
+
+## Least Squares & Projection
+- Normal equations: $X^TX \beta = X^T y$
+- Projection matrix: $P = X(X^TX)^{-1} X^T$
+- Optional: QR decomposition for numerical stability

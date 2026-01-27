@@ -1,0 +1,37 @@
+
+---
+title: "Stationarity"
+tags: [time-series, dependence]
+categories: [theory]
+---
+
+## Strict Stationarity
+
+A time series $\{x_t\}$ is **strictly stationary** if the joint distribution of  
+$(x_{t_1}, \dots, x_{t_k})$ is the same as  
+$(x_{t_1+h}, \dots, x_{t_k+h})$ for all shifts $h$.
+
+## Weak Stationarity
+
+More commonly used. Requires:
+
+- Constant mean: $\mathbb{E}[x_t] = \mu$
+- Covariance depends only on lag:
+
+
+$$\gamma(h) = \text{Cov}(x_{t+h}, x_t)$$
+
+:::callout-tip
+In this course, “stationary” usually means **weakly stationary**.
+:::
+
+## Examples
+
+- White noise ✔
+- Moving average ✔
+- Random walk ✘
+
+## See also
+- [White Noise](white-noise.qmd)
+- [Autocovariance](autocovariance.qmd)
+- [[Random Walk]]

@@ -1,0 +1,608 @@
+---
+title: "Exploratory Data Analysis for Time Series"
+date: 2026-01-26
+tags: [time-series, eda, visualization, preprocessing, scatter-plots]
+categories: [PSTAT 174, Fundamentals]
+---
+
+## Overview
+
+Exploratory Data Analysis (EDA) is the critical first step in time series analysis. Before fitting any models, we must understand the data's structure, patterns, and potential issues.
+
+## Initial Steps in Time Series EDA
+
+### 1. Time Series Plot
+
+The most basic and important visualization!
+
+**What to look for:**
+- **Trend**: Long-term increase or decrease
+- **Seasonality**: Regular patterns repeating at fixed intervals
+- **Cycles**: Irregular fluctuations (not fixed period)
+- **Changing variance**: Spread increasing/decreasing over time
+- **Outliers**: Unusual observations
+- **Structural breaks**: Sudden changes in behavior
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def initial_ts_plot(data, title='Time Series Plot', figsize=(14, 6)):
+    """
+    Create initial time series visualization
+    
+    Parameters:
+    -----------
+    data : array-like or Series
+        Time series data
+    title : str
+        Plot title
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    if isinstance(data, pd.Series):
+        ax.plot(data.index, data.values, linewidth=1)
+        ax.set_xlabel('Time')
+    else:
+        ax.plot(data, linewidth=1)
+        ax.set_xlabel('Index')
+    
+    ax.set_ylabel('Value')
+    ax.set_title(title)
+    ax.grid(alpha=0.3)
+    
+    # Add horizontal line at mean
+    mean_val = np.mean(data)
+    ax.axhline(mean_val, color='red', linestyle='--', 
+              linewidth=1, alpha=0.7, label=f'Mean: {mean_val:.2f}')
+    ax.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
+# Example: Generate synthetic data with multiple components
+np.random.seed(42)
+n = 200
+t = np.arange(n)
+
+# Components
+trend = 50 + 0.3 * t
+seasonal = 15 * np.sin(2 * np.pi * t / 12)
+noise = np.random.normal(0, 5, n)
+
+data = trend + seasonal + noise
+
+initial_ts_plot(data, title='Synthetic Time Series: Trend + Seasonality + Noise')
+```
+
+### 2. Decomposition Plot
+
+Separate the series into components:
+
+$$x_t = T_t + S_t + R_t$$
+
+where:
+- $T_t$ = Trend component
+- $S_t$ = Seasonal component  
+- $R_t$ = Remainder (residual)
+
+```python
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+def decompose_series(data, period=12, model='additive'):
+    """
+    Decompose time series into trend, seasonal, residual
+    
+    Parameters:
+    -----------
+    data : array-like
+        Time series data
+    period : int
+        Seasonal period
+    model : str
+        'additive' or 'multiplicative'
+    """
+    # Create time series object if needed
+    if not isinstance(data, pd.Series):
+        data = pd.Series(data)
+    
+    # Decompose
+    decomposition = seasonal_decompose(data, model=model, period=period)
+    
+    # Plot
+    fig, axes = plt.subplots(4, 1, figsize=(14, 10))
+    
+    decomposition.observed.plot(ax=axes[0], title='Original')
+    axes[0].set_ylabel('Observed')
+    
+    decomposition.trend.plot(ax=axes[1], title='Trend')
+    axes[1].set_ylabel('Trend')
+    
+    decomposition.seasonal.plot(ax=axes[2], title='Seasonal')
+    axes[2].set_ylabel('Seasonal')
+    
+    decomposition.resid.plot(ax=axes[3], title='Residual')
+    axes[3].set_ylabel('Residual')
+    axes[3].set_xlabel('Time')
+    
+    for ax in axes:
+        ax.grid(alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return decomposition
+
+# Example
+decomp = decompose_series(data, period=12, model='additive')
+```
+
+## Lag Plots and Scatter Plot Matrices
+
+### Lag Plots
+
+A **lag plot** shows $x_t$ vs $x_{t-h}$ for different lags $h$.
+
+::: {.callout-note}
+## Interpreting Lag Plots
+- **Strong positive correlation** at lag $h$ → potential AR($h$) term
+- **Linear relationship** → linear models appropriate
+- **Nonlinear patterns** → may need transformations or nonlinear models
+- **No pattern** (random scatter) → little correlation at that lag
+:::
+
+```python
+def lag_plot_matrix(data, lags=[1, 2, 3, 4, 6, 12], figsize=(15, 10)):
+    """
+    Create matrix of lag plots
+    
+    Parameters:
+    -----------
+    data : array-like
+        Time series data
+    lags : list
+        List of lags to plot
+    """
+    n_plots = len(lags)
+    n_cols = 3
+    n_rows = (n_plots + n_cols - 1) // n_cols
+    
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+    axes = axes.ravel()
+    
+    for idx, lag in enumerate(lags):
+        # Create lagged data
+        x = data[lag:]
+        x_lag = data[:-lag]
+        
+        # Scatter plot
+        axes[idx].scatter(x_lag, x, alpha=0.5, s=10)
+        axes[idx].set_xlabel(f'$x_{{t-{lag}}}$')
+        axes[idx].set_ylabel(f'$x_t$')
+        axes[idx].set_title(f'Lag {lag}')
+        axes[idx].grid(alpha=0.3)
+        
+        # Add correlation coefficient
+        corr = np.corrcoef(x_lag, x)[0, 1]
+        axes[idx].text(0.05, 0.95, f'ρ = {corr:.3f}',
+                      transform=axes[idx].transAxes,
+                      verticalalignment='top',
+                      bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    
+    # Hide unused subplots
+    for idx in range(n_plots, len(axes)):
+        axes[idx].axis('off')
+    
+    plt.suptitle('Lag Plot Matrix', fontsize=16, y=1.00)
+    plt.tight_layout()
+    plt.show()
+
+# Example with AR(1) data
+np.random.seed(123)
+n = 200
+ar1_data = np.zeros(n)
+ar1_data[0] = np.random.normal()
+phi = 0.8
+
+for t in range(1, n):
+    ar1_data[t] = phi * ar1_data[t-1] + np.random.normal()
+
+lag_plot_matrix(ar1_data, lags=[1, 2, 3, 4, 5, 6])
+```
+
+### Cross-Correlation with Lagged Variables
+
+From the lecture: examining SOI (Southern Oscillation Index) and Recruitment data.
+
+```python
+def cross_lag_plot(x, y, max_lag=12, figsize=(15, 10)):
+    """
+    Create lag plots between two series
+    Shows y_t vs x_{t-h} for different lags h
+    
+    Parameters:
+    -----------
+    x : array-like
+        First time series (predictor)
+    y : array-like
+        Second time series (response)
+    max_lag : int
+        Maximum lag to display
+    """
+    n_cols = 4
+    n_rows = (max_lag + n_cols - 1) // n_cols
+    
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+    axes = axes.ravel()
+    
+    # Ensure equal length
+    n = min(len(x), len(y))
+    x = x[:n]
+    y = y[:n]
+    
+    for h in range(max_lag):
+        if h == 0:
+            # No lag
+            x_lag = x
+            y_curr = y
+        else:
+            # Lag h: y_t with x_{t-h}
+            x_lag = x[:-h]
+            y_curr = y[h:]
+        
+        # Scatter plot
+        axes[h].scatter(x_lag, y_curr, alpha=0.5, s=10)
+        axes[h].set_xlabel(f'$x_{{t-{h}}}$')
+        axes[h].set_ylabel(f'$y_t$')
+        axes[h].set_title(f'Lag {h}')
+        axes[h].grid(alpha=0.3)
+        
+        # Correlation
+        corr = np.corrcoef(x_lag, y_curr)[0, 1]
+        axes[h].text(0.05, 0.95, f'ρ = {corr:.3f}',
+                    transform=axes[h].transAxes,
+                    verticalalignment='top',
+                    bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5))
+        
+        # Add LOWESS smooth
+        from statsmodels.nonparametric.smoothers_lowess import lowess
+        smooth = lowess(y_curr, x_lag, frac=0.3)
+        axes[h].plot(smooth[:, 0], smooth[:, 1], 'r-', linewidth=2, alpha=0.7)
+    
+    # Hide unused subplots
+    for idx in range(max_lag, len(axes)):
+        axes[idx].axis('off')
+    
+    plt.suptitle('Cross-Lag Plot Matrix', fontsize=16, y=1.00)
+    plt.tight_layout()
+    plt.show()
+
+# Example: Create two related series
+np.random.seed(456)
+n = 200
+x = np.cumsum(np.random.normal(0, 1, n))  # Random walk
+y = 0.5 * np.concatenate([np.zeros(6), x[:-6]]) + np.random.normal(0, 2, n)  # y responds to x with lag 6
+
+cross_lag_plot(x, y, max_lag=12)
+```
+
+## Piecewise Linear Regression
+
+From lecture: modeling nonlinear relationships using **dummy variables**.
+
+For SOI and Recruitment at lag $h=6$:
+
+$$R_t = \begin{cases}
+\beta_{1,0} + \beta_{1,1}S_{t-6} + w_t & \text{if } S_{t-6} < 0 \\
+\beta_{2,0} + \beta_{2,1}S_{t-6} + w_t & \text{if } S_{t-6} \geq 0
+\end{cases}$$
+
+Equivalently:
+
+$$R_t = \beta_0 + \beta_1 S_{t-6} + \beta_2 D_{t-6} + \beta_3 D_{t-6}S_{t-6} + w_t$$
+
+where $D_t = \mathbb{1}_{S_t \geq 0}$ (dummy variable).
+
+```python
+def piecewise_regression_analysis(x, y, lag=6, threshold=0):
+    """
+    Fit piecewise linear regression with interaction term
+    
+    Parameters:
+    -----------
+    x : array-like
+        Predictor series
+    y : array-like
+        Response series
+    lag : int
+        Lag for predictor
+    threshold : float
+        Threshold for splitting regression
+    """
+    from sklearn.linear_model import LinearRegression
+    
+    # Create lagged predictor
+    n = len(y)
+    if lag > 0:
+        x_lag = x[:-lag]
+        y_curr = y[lag:]
+    else:
+        x_lag = x
+        y_curr = y
+    
+    # Create dummy variable
+    dummy = (x_lag >= threshold).astype(int)
+    
+    # Create interaction term
+    interaction = x_lag * dummy
+    
+    # Prepare design matrix
+    X = np.column_stack([x_lag, dummy, interaction])
+    
+    # Fit model
+    model = LinearRegression()
+    model.fit(X, y_curr)
+    
+    # Predictions
+    y_pred = model.predict(X)
+    
+    # Coefficients
+    beta0 = model.intercept_
+    beta1, beta2, beta3 = model.coef_
+    
+    print("Piecewise Linear Regression Results:")
+    print("=" * 60)
+    print(f"Model: y_t = β₀ + β₁·x_{{t-{lag}}} + β₂·D + β₃·D·x_{{t-{lag}}}")
+    print(f"Where D = 1 if x_{{t-{lag}}} ≥ {threshold}, else 0")
+    print()
+    print(f"β₀ (Intercept):     {beta0:.4f}")
+    print(f"β₁ (x coefficient): {beta1:.4f}")
+    print(f"β₂ (Dummy):         {beta2:.4f}")
+    print(f"β₃ (Interaction):   {beta3:.4f}")
+    print()
+    print("Interpretation:")
+    print(f"  When x < {threshold}:  y = {beta0:.4f} + {beta1:.4f}·x")
+    print(f"  When x ≥ {threshold}: y = {beta0+beta2:.4f} + {beta1+beta3:.4f}·x")
+    print()
+    
+    # R-squared
+    from sklearn.metrics import r2_score
+    r2 = r2_score(y_curr, y_pred)
+    print(f"R² = {r2:.4f}")
+    print("=" * 60)
+    
+    # Visualization
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    
+    # Scatter plot with fitted lines
+    mask_below = x_lag < threshold
+    mask_above = x_lag >= threshold
+    
+    axes[0].scatter(x_lag[mask_below], y_curr[mask_below], 
+                   alpha=0.5, s=20, label=f'x < {threshold}', color='blue')
+    axes[0].scatter(x_lag[mask_above], y_curr[mask_above], 
+                   alpha=0.5, s=20, label=f'x ≥ {threshold}', color='red')
+    
+    # Fitted values
+    x_sorted = np.sort(x_lag)
+    dummy_sorted = (x_sorted >= threshold).astype(int)
+    interaction_sorted = x_sorted * dummy_sorted
+    X_sorted = np.column_stack([x_sorted, dummy_sorted, interaction_sorted])
+    y_fit = model.predict(X_sorted)
+    
+    axes[0].plot(x_sorted, y_fit, 'g-', linewidth=2, label='Piecewise Fit')
+    axes[0].axvline(threshold, color='black', linestyle='--', 
+                   linewidth=1, alpha=0.5, label='Threshold')
+    axes[0].set_xlabel(f'x_(t-{lag})')
+    axes[0].set_ylabel('y_t')
+    axes[0].set_title('Piecewise Linear Regression')
+    axes[0].legend()
+    axes[0].grid(alpha=0.3)
+    
+    # Residuals
+    residuals = y_curr - y_pred
+    axes[1].scatter(y_pred, residuals, alpha=0.5, s=20)
+    axes[1].axhline(0, color='red', linestyle='--', linewidth=1)
+    axes[1].set_xlabel('Fitted Values')
+    axes[1].set_ylabel('Residuals')
+    axes[1].set_title('Residual Plot')
+    axes[1].grid(alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return model, residuals
+
+# Example: Simulate SOI-Recruitment relationship
+np.random.seed(789)
+n = 300
+soi = np.random.normal(0, 1, n)
+rec = np.zeros(n)
+
+for t in range(6, n):
+    if soi[t-6] < 0:
+        rec[t] = 75 - 15 * soi[t-6] + np.random.normal(0, 20)
+    else:
+        rec[t] = 74 - 65 * soi[t-6] + np.random.normal(0, 20)
+
+model, residuals = piecewise_regression_analysis(soi, rec, lag=6, threshold=0)
+```
+
+## Detecting Signals in Noise
+
+From lecture: Discovering periodic signals hidden in noise.
+
+**Model**: $x_t = A\cos(2\pi\omega t + \phi) + w_t$
+
+Rewrite using trigonometric identity:
+
+$$x_t = \beta_1\cos(2\pi\omega t) + \beta_2\sin(2\pi\omega t) + w_t$$
+
+where $\beta_1 = A\cos\phi$ and $\beta_2 = -A\sin\phi$.
+
+```python
+def detect_periodic_signal(data, frequency, plot=True):
+    """
+    Fit cosine-sine model to detect periodic signal
+    
+    Parameters:
+    -----------
+    data : array-like
+        Time series data
+    frequency : float
+        Frequency to test (cycles per unit time)
+    plot : bool
+        Whether to plot results
+    
+    Returns:
+    --------
+    results : dict
+        Fitted parameters and statistics
+    """
+    from sklearn.linear_model import LinearRegression
+    
+    n = len(data)
+    t = np.arange(n)
+    
+    # Create regressors
+    z1 = np.cos(2 * np.pi * frequency * t)
+    z2 = np.sin(2 * np.pi * frequency * t)
+    
+    X = np.column_stack([z1, z2])
+    
+    # Fit model (no intercept)
+    model = LinearRegression(fit_intercept=False)
+    model.fit(X, data)
+    
+    beta1, beta2 = model.coef_
+    
+    # Calculate amplitude and phase
+    A = np.sqrt(beta1**2 + beta2**2)
+    phi = np.arctan2(-beta2, beta1)
+    
+    # Predictions
+    fitted = model.predict(X)
+    residuals = data - fitted
+    
+    # R-squared
+    from sklearn.metrics import r2_score
+    r2 = r2_score(data, fitted)
+    
+    results = {
+        'beta1': beta1,
+        'beta2': beta2,
+        'amplitude': A,
+        'phase': phi,
+        'frequency': frequency,
+        'period': 1/frequency if frequency > 0 else np.inf,
+        'r_squared': r2,
+        'fitted': fitted,
+        'residuals': residuals
+    }
+    
+    print("Periodic Signal Detection:")
+    print("=" * 60)
+    print(f"Model: x_t = A·cos(2π·ω·t + φ) + w_t")
+    print(f"Frequency (ω): {frequency:.4f} cycles/unit")
+    print(f"Period (1/ω):  {results['period']:.2f} time units")
+    print()
+    print(f"β₁ (cos coef):  {beta1:.4f}")
+    print(f"β₂ (sin coef):  {beta2:.4f}")
+    print()
+    print(f"Amplitude (A):  {A:.4f}")
+    print(f"Phase (φ):      {phi:.4f} radians = {np.degrees(phi):.2f}°")
+    print()
+    print(f"R² = {r2:.4f}")
+    print("=" * 60)
+    
+    if plot:
+        fig, axes = plt.subplots(2, 1, figsize=(14, 8))
+        
+        # Time series with fitted signal
+        axes[0].plot(t, data, 'o-', markersize=2, alpha=0.5, 
+                    label='Observed', linewidth=0.8)
+        axes[0].plot(t, fitted, 'r-', linewidth=2, 
+                    label=f'Fitted Signal (ω={frequency:.3f})')
+        axes[0].set_xlabel('Time')
+        axes[0].set_ylabel('Value')
+        axes[0].set_title('Signal Detection')
+        axes[0].legend()
+        axes[0].grid(alpha=0.3)
+        
+        # Residuals
+        axes[1].plot(t, residuals, 'o-', markersize=2, linewidth=0.8)
+        axes[1].axhline(0, color='red', linestyle='--', linewidth=1)
+        axes[1].set_xlabel('Time')
+        axes[1].set_ylabel('Residuals')
+        axes[1].set_title('Residuals After Removing Signal')
+        axes[1].grid(alpha=0.3)
+        
+        plt.tight_layout()
+        plt.show()
+    
+    return results
+
+# Example from lecture: Hidden signal with noise
+np.random.seed(90210)
+n = 500
+t = np.arange(n)
+frequency = 1/50  # One cycle every 50 time units
+
+# True signal
+A_true = 2
+phi_true = 0.6 * np.pi
+signal = A_true * np.cos(2 * np.pi * frequency * t + phi_true)
+
+# Add noise
+noise = np.random.normal(0, 5, n)
+data = signal + noise
+
+# Detect signal
+results = detect_periodic_signal(data, frequency=frequency)
+```
+
+## Summary Statistics
+
+```python
+def time_series_summary(data, name='Series'):
+    """
+    Comprehensive summary statistics for time series
+    """
+    print(f"Summary Statistics: {name}")
+    print("=" * 60)
+    print(f"Length:          {len(data)}")
+    print(f"Mean:            {np.mean(data):.4f}")
+    print(f"Std Dev:         {np.std(data, ddof=1):.4f}")
+    print(f"Min:             {np.min(data):.4f}")
+    print(f"25th percentile: {np.percentile(data, 25):.4f}")
+    print(f"Median:          {np.median(data):.4f}")
+    print(f"75th percentile: {np.percentile(data, 75):.4f}")
+    print(f"Max:             {np.max(data):.4f}")
+    print(f"Range:           {np.max(data) - np.min(data):.4f}")
+    print(f"IQR:             {np.percentile(data, 75) - np.percentile(data, 25):.4f}")
+    print(f"Skewness:        {pd.Series(data).skew():.4f}")
+    print(f"Kurtosis:        {pd.Series(data).kurtosis():.4f}")
+    print("=" * 60)
+
+time_series_summary(data, name='Example Series')
+```
+
+## Connection to Other Topics
+
+- [Trend Stationarity](trend_stationarity.qmd) - Identifying and removing trends
+- [Transformations](transformations.qmd) - Stabilizing variance
+- [Smoothing Methods](smoothing_methods.qmd) - Extracting patterns
+- [ACF and PACF](acf_pacf.qmd) - Formal correlation analysis
+- [Model Diagnostics](diagnostics.qmd) - After fitting models
+
+## Key Takeaways
+
+1. **Always start with plots**: Time series, lag plots, decomposition
+2. **Look for**: Trend, seasonality, changing variance, outliers
+3. **Lag plots** reveal autocorrelation structure visually
+4. **Cross-lag plots** show relationships between series at different lags
+5. **Piecewise regression** handles nonlinear relationships with dummy variables
+6. **Periodic signals** can be detected using cos/sin regressors
+7. **Summary statistics** provide numerical context
+8. EDA guides **transformation and model selection** decisions

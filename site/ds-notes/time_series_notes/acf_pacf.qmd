@@ -1,0 +1,367 @@
+---
+title: "ACF and PACF: Model Identification Tools"
+date: 2026-01-26
+tags: [time-series, acf, pacf, autocorrelation, model-identification]
+categories: [PSTAT 174, Diagnostics]
+---
+
+## Overview
+
+The Autocorrelation Function (ACF) and Partial Autocorrelation Function (PACF) are essential tools for identifying appropriate ARIMA model orders.
+
+## Autocorrelation Function (ACF)
+
+### Definition
+
+The **autocorrelation function** at lag $h$ is:
+
+$$\rho(h) = \frac{\gamma(h)}{\gamma(0)} = \frac{\text{Cov}(x_{t+h}, x_t)}{\text{Var}(x_t)}$$
+
+where $\gamma(h) = \text{Cov}(x_{t+h}, x_t)$ is the autocovariance function.
+
+::: {.callout-note}
+## Properties of ACF
+1. $\rho(0) = 1$
+2. $\rho(h) = \rho(-h)$ (symmetry)
+3. $|\rho(h)| \leq 1$ for all $h$
+:::
+
+### ACF of MA(q) Models
+
+For an MA(q) model: $x_t = w_t + \theta_1 w_{t-1} + \cdots + \theta_q w_{t-q}$
+
+$$\gamma(h) = \begin{cases}
+\sigma_w^2 \sum_{j=0}^{q} \theta_j^2 & h = 0 \\
+\sigma_w^2 \sum_{k=0}^{q-h} \theta_k \theta_{k+h} & 1 \leq h \leq q \\
+0 & h > q
+\end{cases}$$
+
+where $\theta_0 = 1$.
+
+::: {.callout-important}
+## Key Property: ACF Cutoff
+The ACF of MA(q) **cuts off after lag** $q$:
+$$\rho(h) = 0 \quad \text{for } h > q$$
+
+This is the signature property for identifying MA models!
+:::
+
+### ACF of AR(p) Models
+
+For causal AR(p), the ACF satisfies the **difference equation**:
+
+$$\rho(h) = \phi_1 \rho(h-1) + \phi_2 \rho(h-2) + \cdots + \phi_p \rho(h-p), \quad h \geq 1$$
+
+with initial conditions determined by the model parameters.
+
+**Key Property**: ACF **tails off** (decays exponentially) rather than cutting off.
+
+#### Example: AR(1)
+
+For $x_t = \phi x_{t-1} + w_t$ with $|\phi| < 1$:
+
+$$\rho(h) = \phi^h, \quad h \geq 0$$
+
+- If $\phi > 0$: exponential decay
+- If $\phi < 0$: alternating decay
+
+#### Example: AR(2)
+
+For $x_t = \phi_1 x_{t-1} + \phi_2 x_{t-2} + w_t$, the roots of the characteristic equation determine the ACF behavior:
+
+$$\phi(z) = 1 - \phi_1 z - \phi_2 z^2 = 0$$
+
+**Three cases:**
+
+1. **Real distinct roots** ($\phi_1^2 + 4\phi_2 > 0$):
+   $$\rho(h) = c_+ z_+^{-h} + c_- z_-^{-h}$$
+
+2. **Real repeated root** ($\phi_1^2 + 4\phi_2 = 0$):
+   $$\rho(h) = z_0^{-h}(c_0 + c_1 h)$$
+
+3. **Complex conjugate roots** ($\phi_1^2 + 4\phi_2 < 0$):
+   $$\rho(h) = a|z_+|^{-h}\cos(\omega h + b)$$
+   
+   This creates a **damped sinusoidal pattern** in the ACF!
+
+### ACF of ARMA(p,q) Models
+
+For causal ARMA(p,q), the ACF satisfies:
+
+$$\rho(h) - \phi_1\rho(h-1) - \cdots - \phi_p\rho(h-p) = 0, \quad h \geq \max(p, q+1)$$
+
+**Key Property**: ACF **tails off** exponentially after initial lags.
+
+## Partial Autocorrelation Function (PACF)
+
+### Definition
+
+The PACF at lag $h$ measures the correlation between $x_{t+h}$ and $x_t$ after removing the linear dependence on $\{x_{t+1}, \ldots, x_{t+h-1}\}$.
+
+Formally, let:
+- $\hat{x}_{t+h} = \beta_1 x_{t+h-1} + \cdots + \beta_{h-1} x_{t+1}$ (best linear predictor of $x_{t+h}$)
+- $\hat{x}_t = \beta_{h,1} x_{t+1} + \cdots + \beta_{h,h-1} x_{t+h-1}$ (best linear predictor of $x_t$)
+
+Then:
+
+$$\phi_{hh} = \text{Corr}(x_{t+h} - \hat{x}_{t+h}, x_t - \hat{x}_t), \quad h \geq 2$$
+
+with $\phi_{11} = \rho(1)$.
+
+::: {.callout-note}
+## Gaussian Interpretation
+For Gaussian processes, PACF reduces to conditional correlation:
+$$\phi_{hh} = \text{Corr}(x_{t+h}, x_t \mid x_{t+1}, \ldots, x_{t+h-1})$$
+:::
+
+### Computing PACF
+
+The PACF $\phi_{hh}$ is obtained by minimizing:
+
+$$E\left[\left(x_{t+h} - \sum_{j=1}^{h-1} \beta_j x_{t+j}\right)^2\right]$$
+
+This leads to the **Yule-Walker equations**.
+
+### PACF of AR(p) Models
+
+::: {.callout-important}
+## Key Property: PACF Cutoff
+The PACF of AR(p) **cuts off after lag** $p$:
+$$\phi_{hh} = 0 \quad \text{for } h > p$$
+
+This is the signature property for identifying AR models!
+:::
+
+**Proof idea**: For AR(p), the best linear predictor using $\{x_{t+1}, \ldots, x_{t+p}\}$ is:
+
+$$\hat{x}_{t+h} = \phi_1 x_{t+h-1} + \cdots + \phi_p x_{t+h-p}$$
+
+For $h > p$, this already captures all the dependence, so $\phi_{hh} = 0$.
+
+#### Example: AR(1)
+
+For $x_t = \phi x_{t-1} + w_t$:
+
+- $\phi_{11} = \phi$
+- $\phi_{22} = 0$ (since $\hat{x}_{t+2} = \phi x_{t+1}$ fully explains $x_t$)
+- $\phi_{hh} = 0$ for all $h \geq 2$
+
+### PACF of MA(q) Models
+
+For invertible MA(q), the PACF **tails off** exponentially.
+
+**Example**: MA(1) with $x_t = w_t + \theta w_{t-1}$
+
+$$\phi_{hh} = \frac{-\theta^h(1-\theta^2)}{1-\theta^{2(h+1)}}, \quad h \geq 1$$
+
+This decays like $-\theta^h$ as $h \to \infty$.
+
+### PACF of ARMA(p,q) Models
+
+For ARMA(p,q), the PACF **tails off** after lag $p$ (not a hard cutoff like AR).
+
+## Python Implementation
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.arima_process import ArmaProcess
+from statsmodels.tsa.stattools import acf, pacf
+
+def plot_acf_pacf_comparison(models_dict, max_lags=20):
+    """
+    Plot ACF and PACF for different ARMA models side by side
+    
+    Parameters:
+    -----------
+    models_dict : dict
+        Dictionary with model names as keys and (ar_coef, ma_coef) as values
+    max_lags : int
+        Maximum number of lags to display
+    """
+    n_models = len(models_dict)
+    fig, axes = plt.subplots(n_models, 3, figsize=(15, 4*n_models))
+    
+    if n_models == 1:
+        axes = axes.reshape(1, -1)
+    
+    for idx, (name, (ar_coef, ma_coef)) in enumerate(models_dict.items()):
+        # Generate data
+        process = ArmaProcess(ar_coef, ma_coef)
+        data = process.generate_sample(nsample=500)
+        
+        # Time series plot
+        axes[idx, 0].plot(data[:200])
+        axes[idx, 0].set_title(f'{name}')
+        axes[idx, 0].set_ylabel('Value')
+        if idx == n_models - 1:
+            axes[idx, 0].set_xlabel('Time')
+        
+        # ACF
+        plot_acf(data, lags=max_lags, ax=axes[idx, 1], alpha=0.05)
+        axes[idx, 1].set_title(f'ACF: {name}')
+        if idx == n_models - 1:
+            axes[idx, 1].set_xlabel('Lag')
+        
+        # PACF
+        plot_pacf(data, lags=max_lags, ax=axes[idx, 2], alpha=0.05)
+        axes[idx, 2].set_title(f'PACF: {name}')
+        if idx == n_models - 1:
+            axes[idx, 2].set_xlabel('Lag')
+    
+    plt.tight_layout()
+    plt.show()
+
+# Example usage
+models = {
+    'AR(1): φ=0.8': ([1, -0.8], [1]),
+    'AR(2): φ₁=1.5, φ₂=-0.75': ([1, -1.5, 0.75], [1]),
+    'MA(1): θ=0.8': ([1], [1, 0.8]),
+    'MA(2): θ₁=-1.5, θ₂=0.75': ([1], [1, -1.5, 0.75]),
+    'ARMA(1,1): φ=0.7, θ=0.4': ([1, -0.7], [1, 0.4])
+}
+
+plot_acf_pacf_comparison(models, max_lags=25)
+```
+
+## Theoretical ACF/PACF Values
+
+```python
+from statsmodels.tsa.arima_process import arma_acf, arma_pacf
+
+# AR(2) with damped oscillation
+phi1, phi2 = 1.5, -0.75
+ar_params = np.array([phi1, phi2])
+ma_params = np.array([])
+
+# Compute theoretical ACF and PACF
+acf_theoretical = arma_acf(ar=ar_params, ma=ma_params, nobs=30)
+pacf_theoretical = arma_pacf(ar=ar_params, ma=ma_params, nobs=30)
+
+# Find the pseudo-period (for complex roots)
+phi_poly = np.array([1, -phi1, -phi2])
+roots = np.roots(phi_poly)
+if np.iscomplex(roots[0]):
+    angle = np.angle(roots[0])
+    pseudo_period = 2 * np.pi / abs(angle)
+    print(f"Complex roots detected!")
+    print(f"Roots: {roots}")
+    print(f"Pseudo-period: {pseudo_period:.2f} time units")
+
+# Plot
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+axes[0].stem(range(len(acf_theoretical)), acf_theoretical)
+axes[0].set_title('Theoretical ACF: AR(2)')
+axes[0].set_xlabel('Lag')
+axes[0].set_ylabel('ACF')
+axes[0].axhline(0, color='black', linewidth=0.8)
+
+axes[1].stem(range(len(pacf_theoretical)), pacf_theoretical)
+axes[1].set_title('Theoretical PACF: AR(2)')
+axes[1].set_xlabel('Lag')
+axes[1].set_ylabel('PACF')
+axes[1].axhline(0, color='black', linewidth=0.8)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Model Identification Strategy
+
+::: {.callout-tip}
+## Decision Table
+
+| ACF Pattern | PACF Pattern | Suggested Model |
+|-------------|--------------|-----------------|
+| Cuts off after lag $q$ | Tails off | MA($q$) |
+| Tails off | Cuts off after lag $p$ | AR($p$) |
+| Tails off | Tails off | ARMA($p$,$q$) |
+| Slow decay | Slow decay | Non-stationary, needs differencing |
+| Damped sine wave | Cuts off after lag 2 | AR(2) with complex roots |
+:::
+
+### Step-by-Step Identification
+
+1. **Check stationarity**: If ACF decays very slowly → difference the series
+2. **Examine ACF**:
+   - Sharp cutoff at lag $q$? → MA($q$)
+   - Exponential decay or damped sine? → AR component
+3. **Examine PACF**:
+   - Sharp cutoff at lag $p$? → AR($p$)
+   - Exponential decay? → MA component
+4. **Both tail off?** → ARMA($p$,$q$), try small values of $p$, $q$
+5. **Validate with residuals**: Check ACF/PACF of residuals are within white noise bounds
+
+## Practical Example: Recruitment Data
+
+```python
+# Assuming you have recruitment data loaded as 'rec'
+# This example shows the workflow
+
+# Step 1: Plot the series
+plt.figure(figsize=(12, 4))
+plt.plot(rec)
+plt.title('Recruitment Data')
+plt.xlabel('Time')
+plt.ylabel('Recruitment Index')
+plt.show()
+
+# Step 2: Check ACF and PACF
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+plot_acf(rec, lags=48, ax=axes[0])
+axes[0].set_title('ACF: Recruitment')
+plot_pacf(rec, lags=48, ax=axes[1])
+axes[1].set_title('PACF: Recruitment')
+plt.show()
+
+# Observations from the lecture:
+# ACF: Decays slowly (0.92, 0.78, 0.63, ...)
+# PACF: Large spike at lag 1 (0.92), then cuts off (-0.44 at lag 2)
+# Conclusion: AR(2) model is appropriate
+
+# Step 3: Fit AR(2)
+from statsmodels.tsa.ar_model import AutoReg
+
+model = AutoReg(rec, lags=2)
+fitted = model.fit()
+print(fitted.summary())
+
+# Step 4: Check residuals
+residuals = fitted.resid
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+axes[0, 0].plot(residuals)
+axes[0, 0].set_title('Residuals')
+axes[0, 0].axhline(0, color='red', linestyle='--')
+
+axes[0, 1].hist(residuals, bins=30, edgecolor='black')
+axes[0, 1].set_title('Residual Distribution')
+
+plot_acf(residuals, lags=30, ax=axes[1, 0])
+axes[1, 0].set_title('ACF of Residuals')
+
+plot_pacf(residuals, lags=30, ax=axes[1, 1])
+axes[1, 1].set_title('PACF of Residuals')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Connection to Other Topics
+
+- [ARIMA Models](arima_models.qmd) - Use ACF/PACF for model selection
+- [Difference Equations](difference_equations.qmd) - Deriving ACF formulas
+- [Forecasting](forecasting.qmd) - Why PACF matters for prediction
+- [Model Diagnostics](diagnostics.qmd) - Checking residual ACF/PACF
+
+## Key Takeaways
+
+1. **ACF cuts off** for MA($q$) at lag $q$
+2. **PACF cuts off** for AR($p$) at lag $p$
+3. **Both tail off** for ARMA($p$,$q$)
+4. **AR(2) with complex roots** shows damped sinusoidal ACF
+5. **Slow ACF decay** indicates non-stationarity → difference
+6. Always check **both ACF and PACF** together for identification
+7. Validate model choice by examining **residual ACF/PACF**

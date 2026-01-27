@@ -1,0 +1,536 @@
+---
+title: "Model Diagnostics and Residual Analysis"
+date: 2026-01-26
+tags: [time-series, diagnostics, residuals, model-checking]
+categories: [PSTAT 174, Model Validation]
+---
+
+## Overview
+
+After fitting an ARIMA model, we must check whether the model assumptions are satisfied. Residual diagnostics help us validate the model and identify potential improvements.
+
+## What Should Residuals Look Like?
+
+For a well-fitted ARIMA model, residuals $\hat{w}_t = x_t - \hat{x}_t$ should behave like **white noise**:
+
+::: {.callout-important}
+## White Noise Properties
+1. **Zero mean**: $E[\hat{w}_t] = 0$
+2. **Constant variance**: $\text{Var}(\hat{w}_t) = \sigma_w^2$
+3. **No autocorrelation**: $\text{Cor}(\hat{w}_t, \hat{w}_s) = 0$ for $t \neq s$
+4. **Normality** (ideally): $\hat{w}_t \sim N(0, \sigma_w^2)$
+:::
+
+If residuals are NOT white noise, the model has **not captured all the structure** in the data.
+
+## Core Diagnostic Plots
+
+### 1. Residual Time Series Plot
+
+Plot $\hat{w}_t$ versus time to check for:
+- **Patterns or trends** (should see none)
+- **Changing variance** (heteroscedasticity)
+- **Outliers** (unusual observations)
+- **Clusters** of large/small values
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from scipy import stats
+
+def plot_residual_diagnostics(model_fit, lags=40):
+    """
+    Create comprehensive residual diagnostic plots
+    
+    Parameters:
+    -----------
+    model_fit : ARIMAResults
+        Fitted ARIMA model from statsmodels
+    lags : int
+        Number of lags for ACF/PACF plots
+    """
+    residuals = model_fit.resid
+    
+    fig = plt.figure(figsize=(15, 10))
+    
+    # Layout: 2x3 grid
+    ax1 = plt.subplot(3, 2, 1)
+    ax2 = plt.subplot(3, 2, 2)
+    ax3 = plt.subplot(3, 2, 3)
+    ax4 = plt.subplot(3, 2, 4)
+    ax5 = plt.subplot(3, 2, 5)
+    ax6 = plt.subplot(3, 2, 6)
+    
+    # 1. Residual time series
+    ax1.plot(residuals, linewidth=0.8)
+    ax1.axhline(0, color='red', linestyle='--', linewidth=1)
+    ax1.set_title('Residuals vs Time')
+    ax1.set_ylabel('Residuals')
+    ax1.grid(alpha=0.3)
+    
+    # 2. Histogram
+    ax2.hist(residuals, bins=30, edgecolor='black', alpha=0.7, density=True)
+    # Overlay normal distribution
+    mu, sigma = residuals.mean(), residuals.std()
+    x_norm = np.linspace(residuals.min(), residuals.max(), 100)
+    ax2.plot(x_norm, stats.norm.pdf(x_norm, mu, sigma), 
+             'r-', linewidth=2, label='Normal')
+    ax2.set_title('Histogram of Residuals')
+    ax2.set_xlabel('Residuals')
+    ax2.set_ylabel('Density')
+    ax2.legend()
+    
+    # 3. Q-Q plot
+    stats.probplot(residuals, dist="norm", plot=ax3)
+    ax3.set_title('Q-Q Plot')
+    ax3.grid(alpha=0.3)
+    
+    # 4. ACF of residuals
+    plot_acf(residuals, lags=lags, ax=ax4, alpha=0.05)
+    ax4.set_title('ACF of Residuals')
+    
+    # 5. PACF of residuals
+    plot_pacf(residuals, lags=lags, ax=ax5, alpha=0.05)
+    ax5.set_title('PACF of Residuals')
+    
+    # 6. Residuals vs Fitted
+    fitted_values = model_fit.fittedvalues
+    ax6.scatter(fitted_values, residuals, alpha=0.5, s=10)
+    ax6.axhline(0, color='red', linestyle='--', linewidth=1)
+    ax6.set_xlabel('Fitted Values')
+    ax6.set_ylabel('Residuals')
+    ax6.set_title('Residuals vs Fitted')
+    ax6.grid(alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+
+# Example usage
+np.random.seed(42)
+
+# Simulate AR(2) data
+from statsmodels.tsa.arima_process import ArmaProcess
+ar_params = [0.7, -0.3]
+ar_coef = np.concatenate(([1], -np.array(ar_params)))
+ma_coef = [1]
+process = ArmaProcess(ar_coef, ma_coef)
+data = process.generate_sample(nsample=200)
+
+# Fit correct model
+model = ARIMA(data, order=(2, 0, 0))
+fitted = model.fit()
+
+print("Model Summary:")
+print(fitted.summary())
+print("\n")
+
+# Diagnostic plots
+plot_residual_diagnostics(fitted, lags=30)
+```
+
+### 2. ACF/PACF of Residuals
+
+The most important diagnostic for time series models!
+
+::: {.callout-tip}
+## What to Look For
+**Good model**: 
+- ACF/PACF values within confidence bounds (roughly $\pm 2/\sqrt{n}$)
+- No systematic patterns
+- Looks like white noise
+
+**Bad model**:
+- Many values outside confidence bounds
+- Patterns in ACF/PACF
+- Suggests missing AR or MA terms
+:::
+
+### 3. Q-Q Plot (Normal Probability Plot)
+
+Checks if residuals follow a normal distribution:
+- **Good fit**: Points lie approximately on the 45° line
+- **Heavy tails**: Points curve away at extremes
+- **Skewness**: Systematic deviation from line
+
+### 4. Histogram of Residuals
+
+Visual check for normality:
+- Should be roughly bell-shaped
+- Centered at zero
+- Compare with overlaid normal curve
+
+## Formal Statistical Tests
+
+### Ljung-Box Test
+
+Tests whether residuals are independently distributed (white noise).
+
+**Null hypothesis**: $H_0$: Residuals are white noise (no autocorrelation)
+
+**Test statistic**:
+$$Q_{LB}(h) = n(n+2)\sum_{k=1}^{h}\frac{\hat{\rho}_k^2}{n-k}$$
+
+where:
+- $n$ = sample size
+- $h$ = number of lags tested
+- $\hat{\rho}_k$ = sample ACF of residuals at lag $k$
+
+**Distribution**: $Q_{LB} \sim \chi^2_{h-p-q}$ approximately
+
+::: {.callout-important}
+## Decision Rule
+- **p-value > 0.05**: Fail to reject $H_0$ → Residuals appear to be white noise ✓
+- **p-value < 0.05**: Reject $H_0$ → Residuals have autocorrelation (model inadequate)
+:::
+
+```python
+from statsmodels.stats.diagnostic import acorr_ljungbox
+
+def ljung_box_test(residuals, lags=20):
+    """
+    Perform Ljung-Box test on residuals
+    
+    Parameters:
+    -----------
+    residuals : array-like
+        Model residuals
+    lags : int
+        Number of lags to test
+    
+    Returns:
+    --------
+    result : DataFrame
+        Test statistics and p-values
+    """
+    lb_result = acorr_ljungbox(residuals, lags=lags, return_df=True)
+    
+    print("Ljung-Box Test Results:")
+    print("=" * 50)
+    print(lb_result.head(10))
+    print("\n")
+    
+    # Check if any p-values are significant
+    significant = lb_result['lb_pvalue'] < 0.05
+    if significant.any():
+        print(f"⚠️  Warning: {significant.sum()} out of {lags} lags show significant autocorrelation")
+        print(f"First significant lag: {significant.idxmax() + 1}")
+    else:
+        print("✓ All lags pass: No significant autocorrelation detected")
+    
+    return lb_result
+
+# Example
+residuals = fitted.resid
+lb_result = ljung_box_test(residuals, lags=20)
+```
+
+### Shapiro-Wilk Test for Normality
+
+Tests if residuals come from a normal distribution.
+
+**Null hypothesis**: $H_0$: Residuals are normally distributed
+
+```python
+def normality_tests(residuals):
+    """
+    Perform normality tests on residuals
+    """
+    # Shapiro-Wilk test
+    shapiro_stat, shapiro_p = stats.shapiro(residuals)
+    
+    # Jarque-Bera test
+    from statsmodels.stats.stattools import jarque_bera
+    jb_stat, jb_p, skew, kurtosis = jarque_bera(residuals)
+    
+    print("Normality Test Results:")
+    print("=" * 50)
+    print(f"Shapiro-Wilk Test:")
+    print(f"  Statistic: {shapiro_stat:.4f}")
+    print(f"  p-value: {shapiro_p:.4f}")
+    print(f"  Result: {'Normal' if shapiro_p > 0.05 else 'Not Normal'}")
+    print()
+    print(f"Jarque-Bera Test:")
+    print(f"  Statistic: {jb_stat:.4f}")
+    print(f"  p-value: {jb_p:.4f}")
+    print(f"  Skewness: {skew:.4f}")
+    print(f"  Kurtosis: {kurtosis:.4f}")
+    print(f"  Result: {'Normal' if jb_p > 0.05 else 'Not Normal'}")
+
+normality_tests(residuals)
+```
+
+### Heteroscedasticity Tests
+
+Check if variance is constant over time.
+
+```python
+def heteroscedasticity_test(residuals):
+    """
+    Test for heteroscedasticity (changing variance)
+    """
+    from statsmodels.stats.diagnostic import het_arch
+    
+    # ARCH test
+    lm_stat, lm_p, f_stat, f_p = het_arch(residuals, nlags=10)
+    
+    print("Heteroscedasticity Test (ARCH):")
+    print("=" * 50)
+    print(f"LM Statistic: {lm_stat:.4f}")
+    print(f"p-value: {lm_p:.4f}")
+    print(f"Result: {'Homoscedastic' if lm_p > 0.05 else 'Heteroscedastic'}")
+
+heteroscedasticity_test(residuals)
+```
+
+## Common Problems and Solutions
+
+### Problem 1: ACF Shows Significant Spikes
+
+**Diagnosis**: Model is under-specified (missing terms)
+
+**Solutions**:
+- Significant spike at lag $k$ in ACF → add MA($k$) term
+- Significant spike at lag $k$ in PACF → add AR($k$) term
+- Try ARMA($p$, $q$) with higher orders
+
+### Problem 2: Residuals Show Trend
+
+**Diagnosis**: Non-stationarity not fully removed
+
+**Solutions**:
+- Increase differencing order: ARIMA($p$, $d+1$, $q$)
+- Check if transformation needed (Box-Cox)
+- Consider deterministic trend component
+
+### Problem 3: Changing Variance
+
+**Diagnosis**: Heteroscedasticity
+
+**Solutions**:
+- Apply variance-stabilizing transformation (log, Box-Cox)
+- Consider GARCH models for conditional heteroscedasticity
+- Weighted least squares
+
+### Problem 4: Non-Normal Residuals
+
+**Diagnosis**: Heavy tails or skewness
+
+**Solutions**:
+- Check for outliers (may need robust methods)
+- Try transformations
+- Consider t-distribution for innovations
+- Often acceptable if ACF looks good (CLT helps with inference)
+
+## Complete Diagnostic Example
+
+```python
+def comprehensive_diagnostics(data, order, seasonal_order=None):
+    """
+    Fit model and run complete diagnostics
+    
+    Parameters:
+    -----------
+    data : array-like
+        Time series data
+    order : tuple
+        (p, d, q) for ARIMA
+    seasonal_order : tuple or None
+        (P, D, Q, s) for seasonal ARIMA
+    """
+    # Fit model
+    if seasonal_order is None:
+        model = ARIMA(data, order=order)
+    else:
+        from statsmodels.tsa.statespace.sarimax import SARIMAX
+        model = SARIMAX(data, order=order, seasonal_order=seasonal_order)
+    
+    fitted = model.fit()
+    residuals = fitted.resid
+    
+    print("=" * 70)
+    print("MODEL DIAGNOSTICS REPORT")
+    print("=" * 70)
+    print()
+    
+    # Model summary
+    print("Model:", fitted.model.__class__.__name__)
+    print(f"Order: {order}")
+    print(f"AIC: {fitted.aic:.2f}")
+    print(f"BIC: {fitted.bic:.2f}")
+    print()
+    
+    # Residual statistics
+    print("Residual Statistics:")
+    print("-" * 50)
+    print(f"Mean: {residuals.mean():.6f}")
+    print(f"Std Dev: {residuals.std():.4f}")
+    print(f"Min: {residuals.min():.4f}")
+    print(f"Max: {residuals.max():.4f}")
+    print()
+    
+    # Ljung-Box test
+    print("Ljung-Box Test (White Noise Check):")
+    print("-" * 50)
+    lb_result = acorr_ljungbox(residuals, lags=min(20, len(residuals)//5), 
+                                return_df=True)
+    significant_lags = (lb_result['lb_pvalue'] < 0.05).sum()
+    print(f"Significant lags: {significant_lags}/{len(lb_result)}")
+    if significant_lags == 0:
+        print("✓ PASS: Residuals appear to be white noise")
+    else:
+        print("⚠️  FAIL: Autocorrelation detected in residuals")
+    print()
+    
+    # Normality test
+    print("Normality Tests:")
+    print("-" * 50)
+    shapiro_stat, shapiro_p = stats.shapiro(residuals)
+    print(f"Shapiro-Wilk p-value: {shapiro_p:.4f}")
+    if shapiro_p > 0.05:
+        print("✓ PASS: Residuals appear normal")
+    else:
+        print("⚠️  FAIL: Residuals deviate from normality")
+    print()
+    
+    # Heteroscedasticity
+    print("Heteroscedasticity Test:")
+    print("-" * 50)
+    from statsmodels.stats.diagnostic import het_arch
+    _, lm_p, _, _ = het_arch(residuals, nlags=10)
+    print(f"ARCH test p-value: {lm_p:.4f}")
+    if lm_p > 0.05:
+        print("✓ PASS: Constant variance")
+    else:
+        print("⚠️  FAIL: Heteroscedasticity detected")
+    print()
+    
+    print("=" * 70)
+    
+    # Diagnostic plots
+    plot_residual_diagnostics(fitted, lags=min(40, len(residuals)//3))
+    
+    return fitted
+
+# Example: Compare good vs bad model
+np.random.seed(123)
+
+# Generate ARMA(2,1) data
+ar_params = [0.7, -0.3]
+ma_params = [0.5]
+ar_coef = np.concatenate(([1], -np.array(ar_params)))
+ma_coef = np.concatenate(([1], np.array(ma_params)))
+process = ArmaProcess(ar_coef, ma_coef)
+data = process.generate_sample(nsample=300)
+
+print("FITTING CORRECT MODEL: ARMA(2,1)")
+print()
+fitted_correct = comprehensive_diagnostics(data, order=(2, 0, 1))
+
+print("\n" * 3)
+print("FITTING INCORRECT MODEL: AR(1)")
+print()
+fitted_wrong = comprehensive_diagnostics(data, order=(1, 0, 0))
+```
+
+## Model Comparison
+
+When comparing multiple models, use:
+
+### 1. Information Criteria
+
+**Akaike Information Criterion (AIC)**:
+$$\text{AIC} = -2\log(L) + 2k$$
+
+**Bayesian Information Criterion (BIC)**:
+$$\text{BIC} = -2\log(L) + k\log(n)$$
+
+where:
+- $L$ = likelihood
+- $k$ = number of parameters
+- $n$ = sample size
+
+::: {.callout-note}
+## Choosing Between AIC and BIC
+- **Lower is better** for both
+- **BIC** penalizes complexity more heavily (prefers simpler models)
+- **AIC** better for prediction
+- **BIC** better for identifying true model (if it exists in candidate set)
+:::
+
+```python
+def compare_models(data, model_orders):
+    """
+    Compare multiple ARIMA models
+    
+    Parameters:
+    -----------
+    data : array-like
+        Time series data
+    model_orders : list of tuples
+        List of (p, d, q) tuples to try
+    """
+    results = []
+    
+    for order in model_orders:
+        try:
+            model = ARIMA(data, order=order)
+            fitted = model.fit()
+            
+            # Calculate metrics
+            aic = fitted.aic
+            bic = fitted.bic
+            
+            # Ljung-Box test
+            lb = acorr_ljungbox(fitted.resid, lags=10, return_df=True)
+            lb_pvalue = lb['lb_pvalue'].iloc[-1]
+            
+            results.append({
+                'Order': f"ARIMA{order}",
+                'AIC': aic,
+                'BIC': bic,
+                'LB p-value': lb_pvalue,
+                'Params': fitted.params.shape[0]
+            })
+        except:
+            print(f"Failed to fit ARIMA{order}")
+    
+    import pandas as pd
+    df = pd.DataFrame(results)
+    df = df.sort_values('AIC')
+    
+    print("Model Comparison:")
+    print("=" * 70)
+    print(df.to_string(index=False))
+    print()
+    print("Best model by AIC:", df.iloc[0]['Order'])
+    print("Best model by BIC:", df.sort_values('BIC').iloc[0]['Order'])
+    
+    return df
+
+# Example
+model_orders = [
+    (1, 0, 0), (2, 0, 0), (3, 0, 0),
+    (0, 0, 1), (0, 0, 2), (0, 0, 3),
+    (1, 0, 1), (2, 0, 1), (1, 0, 2)
+]
+
+comparison = compare_models(data, model_orders)
+```
+
+## Connection to Other Topics
+
+- [ARIMA Models](arima_models.qmd) - Models being diagnosed
+- [ACF and PACF](acf_pacf.qmd) - Used in residual analysis
+- [Forecasting](forecasting.qmd) - Good diagnostics → reliable forecasts
+
+## Key Takeaways
+
+1. **Residuals should be white noise**: zero mean, constant variance, no autocorrelation
+2. **ACF/PACF of residuals** most important diagnostic
+3. **Ljung-Box test**: formal test for white noise ($p > 0.05$ is good)
+4. **Normality**: less critical than independence, but check Q-Q plot
+5. **Model comparison**: Use AIC/BIC, lower is better
+6. **Bad diagnostics** → model inadequate → try different $(p, d, q)$
+7. **Perfect normality** not required; focus on **capturing autocorrelation**

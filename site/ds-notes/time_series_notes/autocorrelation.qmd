@@ -1,0 +1,32 @@
+
+---
+title: "Autocorrelation Function (ACF)"
+tags: [time-series, dependence]
+categories: [theory]
+---
+
+## Definition
+
+The **autocorrelation function** is
+
+
+$$\rho(h) = \frac{\gamma(h)}{\gamma(0)}$$
+
+
+It is scale-free and easier to interpret than covariance.
+
+## Interpretation
+
+- Rapid decay → weak dependence
+- Slow decay → strong dependence or non-stationarity
+
+## Python example
+
+```python
+import statsmodels.api as sm
+sm.tsa.acf(x, nlags=20)
+```
+
+## See also
+- [Autocovariance](autocovariance.qmd)
+- [[Linear Process]]

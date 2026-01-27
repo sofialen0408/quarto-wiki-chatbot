@@ -1,0 +1,295 @@
+---
+title: "ARIMA Models: Theory and Implementation"
+date: 2026-01-26
+tags: [time-series, arima, ar, ma, modeling]
+categories: [PSTAT 174, Core Models]
+---
+
+## Overview
+
+ARIMA (AutoRegressive Integrated Moving Average) models are the workhorses of time series analysis, combining autoregression, differencing, and moving averages.
+
+## ARIMA(p, d, q) Definition
+
+The general ARIMA$(p, d, q)$ model is defined by:
+
+$$\phi(B)\nabla^d x_t = \delta + \theta(B)w_t, \quad t \in \mathbb{Z}$$
+
+where:
+
+- $\phi(z) = 1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p z^p$ (AR polynomial)
+- $\theta(z) = 1 + \theta_1 z + \theta_2 z^2 + \cdots + \theta_q z^q$ (MA polynomial)
+- $\nabla^d = (1-B)^d$ (differencing operator)
+- $w_t \sim \text{WN}(0, \sigma_w^2)$ (white noise)
+
+::: {.callout-note}
+## Special Cases
+- **ARMA(p,q)**: When $d = 0$
+- **AR(p)**: When $d = 0, q = 0$
+- **MA(q)**: When $d = 0, p = 0$
+- **Random Walk**: ARIMA(0,1,0)
+:::
+
+## Autoregressive Models: AR(p)
+
+### AR(1) Model
+
+$$x_t = \phi x_{t-1} + w_t$$
+
+**Key Properties:**
+
+- **Mean**: $E[x_t] = 0$ (assuming zero mean)
+- **Variance**: $\gamma(0) = \frac{\sigma_w^2}{1-\phi^2}$ (when $|\phi| < 1$)
+- **ACF**: $\rho(h) = \phi^h$ (exponential decay)
+
+::: {.callout-important}
+## Causality Condition
+An AR(1) model is **causal** (stationary) if and only if $|\phi| < 1$.
+
+When $|\phi| < 1$, we can express AR(1) as an infinite MA:
+$$x_t = \sum_{j=0}^{\infty} \phi^j w_{t-j}$$
+:::
+
+### AR(2) Model
+
+$$x_t = \phi_1 x_{t-1} + \phi_2 x_{t-2} + w_t$$
+
+**Causality conditions** (all three must hold):
+
+1. $\phi_1 + \phi_2 < 1$
+2. $\phi_2 - \phi_1 < 1$
+3. $|\phi_2| < 1$
+
+These define a triangular region in the $(\phi_1, \phi_2)$ parameter space.
+
+### Characteristic Equation
+
+The AR(p) polynomial $\phi(z) = 0$ has roots $z_1, \ldots, z_p$. The model is causal if:
+
+$$|z_i| > 1 \quad \text{for all } i = 1, \ldots, p$$
+
+Or equivalently: **all roots lie outside the unit circle**.
+
+## Moving Average Models: MA(q)
+
+### MA(1) Model
+
+$$x_t = w_t + \theta w_{t-1}$$
+
+**Key Properties:**
+
+- **Mean**: $E[x_t] = 0$
+- **Variance**: $\gamma(0) = \sigma_w^2(1 + \theta^2)$
+- **ACF**: 
+$$\rho(h) = \begin{cases}
+1 & h = 0 \\
+\frac{\theta}{1+\theta^2} & h = 1 \\
+0 & h > 1
+\end{cases}$$
+
+::: {.callout-important}
+## Invertibility Condition
+An MA(1) model is **invertible** if $|\theta| < 1$.
+
+When $|\theta| < 1$, we can express MA(1) as an infinite AR:
+$$x_t = -\sum_{j=1}^{\infty} \theta^j x_{t-j} + w_t$$
+:::
+
+### Parameter Redundancy Example
+
+Consider two MA(1) models:
+
+1. $x_t = w_t + \frac{1}{5}w_{t-1}$ where $w_t \sim \text{WN}(0, 25)$
+2. $y_t = v_t + 5v_{t-1}$ where $v_t \sim \text{WN}(0, 1)$
+
+Both have **identical ACF**! We choose the invertible model (1) with $|\theta| < 1$.
+
+## ARMA(p, q) Models
+
+$$\phi(B)x_t = \theta(B)w_t$$
+
+### Causality and Invertibility
+
+- **Causal**: if $\phi(z) = 0$ implies $|z| > 1$
+- **Invertible**: if $\theta(z) = 0$ implies $|z| > 1$
+
+::: {.callout-tip}
+## Why Both Conditions Matter
+- **Causality**: Ensures the process is stationary and depends only on past
+- **Invertibility**: Ensures we can write $x_t$ in terms of past observations
+- Both are needed for unique, meaningful parameter estimates
+:::
+
+### Parameter Redundancy
+
+If $\phi(z)$ and $\theta(z)$ share a common factor, the model is **over-parameterized**.
+
+**Example**: ARMA(2,2) with common factor
+
+$$\phi(z) = (1+0.5z)(1-0.9z), \quad \theta(z) = (1+0.5z)^2$$
+
+reduces to **ARMA(1,1)**:
+
+$$(1-0.9B)x_t = (1+0.5B)w_t$$
+
+## Python Implementation
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.arima_process import ArmaProcess
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# Simulate AR(1) with phi = 0.9
+np.random.seed(42)
+ar_coef = [1, -0.9]  # 1 - 0.9*B
+ma_coef = [1]        # No MA component
+ar1_process = ArmaProcess(ar_coef, ma_coef)
+ar1_data = ar1_process.generate_sample(nsample=200)
+
+# Simulate MA(1) with theta = 0.8
+ar_coef = [1]
+ma_coef = [1, 0.8]   # 1 + 0.8*B
+ma1_process = ArmaProcess(ar_coef, ma_coef)
+ma1_data = ma1_process.generate_sample(nsample=200)
+
+# Simulate ARMA(1,1)
+ar_coef = [1, -0.7]
+ma_coef = [1, 0.4]
+arma11_process = ArmaProcess(ar_coef, ma_coef)
+arma11_data = arma11_process.generate_sample(nsample=200)
+
+# Plotting
+fig, axes = plt.subplots(3, 3, figsize=(15, 10))
+
+# AR(1)
+axes[0, 0].plot(ar1_data)
+axes[0, 0].set_title('AR(1): φ=0.9')
+axes[0, 0].set_ylabel('Value')
+
+plot_acf(ar1_data, lags=20, ax=axes[0, 1])
+axes[0, 1].set_title('ACF: AR(1)')
+
+plot_pacf(ar1_data, lags=20, ax=axes[0, 2])
+axes[0, 2].set_title('PACF: AR(1)')
+
+# MA(1)
+axes[1, 0].plot(ma1_data)
+axes[1, 0].set_title('MA(1): θ=0.8')
+axes[1, 0].set_ylabel('Value')
+
+plot_acf(ma1_data, lags=20, ax=axes[1, 1])
+axes[1, 1].set_title('ACF: MA(1)')
+
+plot_pacf(ma1_data, lags=20, ax=axes[1, 2])
+axes[1, 2].set_title('PACF: MA(1)')
+
+# ARMA(1,1)
+axes[2, 0].plot(arma11_data)
+axes[2, 0].set_title('ARMA(1,1): φ=0.7, θ=0.4')
+axes[2, 0].set_xlabel('Time')
+axes[2, 0].set_ylabel('Value')
+
+plot_acf(arma11_data, lags=20, ax=axes[2, 1])
+axes[2, 1].set_title('ACF: ARMA(1,1)')
+axes[2, 1].set_xlabel('Lag')
+
+plot_pacf(arma11_data, lags=20, ax=axes[2, 2])
+axes[2, 2].set_title('PACF: ARMA(1,1)')
+axes[2, 2].set_xlabel('Lag')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Fitting ARIMA Models
+
+```python
+from statsmodels.tsa.stattools import adfuller
+
+# Example: Fit ARIMA to simulated data with trend
+np.random.seed(123)
+n = 200
+t = np.arange(n)
+trend = 0.5 * t
+ar_component = 0.8
+x = np.zeros(n)
+x[0] = np.random.normal()
+
+for i in range(1, n):
+    x[i] = ar_component * x[i-1] + np.random.normal()
+
+x = x + trend  # Add trend
+
+# Check if differencing is needed
+result = adfuller(x)
+print(f"ADF Statistic: {result[0]:.4f}")
+print(f"p-value: {result[1]:.4f}")
+
+if result[1] > 0.05:
+    print("Series is non-stationary, differencing needed")
+    d = 1
+else:
+    d = 0
+
+# Fit ARIMA(1, d, 0)
+model = ARIMA(x, order=(1, d, 0))
+fitted_model = model.fit()
+print(fitted_model.summary())
+
+# Diagnostics
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+# Residuals
+axes[0, 0].plot(fitted_model.resid)
+axes[0, 0].set_title('Residuals')
+axes[0, 0].axhline(0, color='red', linestyle='--')
+
+# Residual histogram
+axes[0, 1].hist(fitted_model.resid, bins=20, edgecolor='black')
+axes[0, 1].set_title('Residual Histogram')
+
+# ACF of residuals
+plot_acf(fitted_model.resid, lags=20, ax=axes[1, 0])
+axes[1, 0].set_title('ACF of Residuals')
+
+# Q-Q plot
+from scipy import stats
+stats.probplot(fitted_model.resid, dist="norm", plot=axes[1, 1])
+axes[1, 1].set_title('Q-Q Plot')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Model Identification Table
+
+|           | AR(p) | MA(q) | ARMA(p,q) |
+|-----------|-------|-------|-----------|
+| **ACF**   | Tails off exponentially | Cuts off after lag $q$ | Tails off |
+| **PACF**  | Cuts off after lag $p$ | Tails off exponentially | Tails off |
+
+::: {.callout-tip}
+## Identification Strategy
+1. Plot ACF and PACF of (differenced) data
+2. If ACF cuts off at lag $q$ → try MA($q$)
+3. If PACF cuts off at lag $p$ → try AR($p$)
+4. If both tail off → try ARMA($p$,$q$)
+5. Use information criteria (AIC, BIC) to compare models
+:::
+
+## Connection to Other Topics
+
+- [ACF and PACF](acf_pacf.qmd) - Identification tools
+- [Difference Equations](difference_equations.qmd) - Computing ACF
+- [Forecasting](forecasting.qmd) - Predictions with ARIMA
+
+## Key Takeaways
+
+1. **ARIMA(p,d,q)** combines AR, differencing, and MA components
+2. **Causality**: AR roots outside unit circle → stationary
+3. **Invertibility**: MA roots outside unit circle → unique representation
+4. **Parameter redundancy**: Check for common factors in $\phi(z)$ and $\theta(z)$
+5. Use **ACF/PACF patterns** to identify model orders
+6. Always check **residual diagnostics** after fitting

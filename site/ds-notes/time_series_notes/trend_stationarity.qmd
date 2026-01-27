@@ -1,0 +1,161 @@
+---
+title: "Trend Stationarity & Differencing"
+date: 2026-01-26
+tags: [time-series, stationarity, preprocessing, differencing]
+categories: [PSTAT 174, Fundamentals]
+---
+
+## Overview
+
+Trend stationary models decompose time series into a deterministic trend and a stationary component. This is a fundamental preprocessing step in time series analysis.
+
+## Trend Stationary Model
+
+The basic model assumes:
+
+$$x_t = \mu_t + y_t, \quad t = 1, \ldots, n$$
+
+where:
+
+- $\mu_t$ is the **trend** (non-stationary, deterministic)
+- $y_t$ is a **stationary series** (random fluctuations)
+
+::: {.callout-important}
+## Key Assumption
+The trend $\{\mu_t\}$ is assumed to be **not stationary**, while the residual series $\{y_t\}$ should be stationary after detrending.
+:::
+
+### Estimation Process
+
+1. **Estimate the trend**: Obtain $\hat{\mu}_t$ (often using linear regression)
+2. **Compute residuals**: $\hat{y}_t = x_t - \hat{\mu}_t$
+3. **Check stationarity**: Verify that $\{\hat{y}_t\}$ forms a stationary series
+
+## Differencing
+
+### First Difference Operator
+
+The **first difference** removes linear trends:
+
+$$\nabla x_t := x_t - x_{t-1}$$
+
+For a linear trend model $x_t = \beta_0 + \beta_1 t + w_t$:
+
+$$\nabla x_t = \beta_1 + w_t - w_{t-1}$$
+
+The differenced series $\{\nabla x_t\}$ is a **causal moving average** of $\{w_t\}$, which is stationary if $\{w_t\}$ is stationary.
+
+### Backshift Operator
+
+::: {.callout-note}
+## Definition: Backshift Operator
+The **backshift operator** $B$ is defined as:
+
+$$Bx_t = x_{t-1}, \quad t \in \mathbb{Z}$$
+
+We can apply it $k$ times:
+
+$$B^k x_t = x_{t-k}, \quad t, k \in \mathbb{Z}$$
+:::
+
+Using the backshift operator:
+
+$$\nabla x_t = (1 - B)x_t$$
+
+More generally, the $d$-th order difference:
+
+$$\nabla^d x_t = (1-B)^d x_t$$
+
+## Python Example: Detrending vs Differencing
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import acf
+from scipy import stats
+
+# Simulate data with trend
+np.random.seed(42)
+n = 150
+t = np.arange(n)
+trend = 50 + 0.5 * t
+noise = np.random.normal(0, 5, n)
+x = trend + noise
+
+# Method 1: Linear detrending
+slope, intercept, _, _, _ = stats.linregress(t, x)
+trend_fit = intercept + slope * t
+detrended = x - trend_fit
+
+# Method 2: First differencing
+differenced = np.diff(x)
+
+# Plotting
+fig, axes = plt.subplots(3, 2, figsize=(12, 10))
+
+# Original series
+axes[0, 0].plot(t, x, 'o-', markersize=3)
+axes[0, 0].set_title('Original Series')
+axes[0, 0].set_ylabel('Value')
+
+# ACF of original
+acf_orig = acf(x, nlags=40)
+axes[0, 1].stem(range(len(acf_orig)), acf_orig, basefmt=' ')
+axes[0, 1].set_title('ACF: Original')
+axes[0, 1].set_ylabel('ACF')
+
+# Detrended series
+axes[1, 0].plot(t, detrended, 'o-', markersize=3)
+axes[1, 0].set_title('Detrended Series')
+axes[1, 0].set_ylabel('Value')
+
+# ACF of detrended
+acf_detrend = acf(detrended, nlags=40)
+axes[1, 1].stem(range(len(acf_detrend)), acf_detrend, basefmt=' ')
+axes[1, 1].set_title('ACF: Detrended')
+axes[1, 1].set_ylabel('ACF')
+
+# Differenced series
+axes[2, 0].plot(t[1:], differenced, 'o-', markersize=3)
+axes[2, 0].set_title('First Difference')
+axes[2, 0].set_ylabel('Value')
+axes[2, 0].set_xlabel('Time')
+
+# ACF of differenced
+acf_diff = acf(differenced, nlags=40)
+axes[2, 1].stem(range(len(acf_diff)), acf_diff, basefmt=' ')
+axes[2, 1].set_title('ACF: First Difference')
+axes[2, 1].set_ylabel('ACF')
+axes[2, 1].set_xlabel('Lag')
+
+plt.tight_layout()
+plt.show()
+```
+
+## When to Use Each Method
+
+| Method | Best For | Pros | Cons |
+|--------|----------|------|------|
+| **Linear Detrending** | Clear linear trend | Interpretable coefficients | Assumes specific functional form |
+| **Differencing** | Unknown trend form | Model-free, robust | Loses one observation per difference |
+
+::: {.callout-tip}
+## Practical Advice
+- Use **ACF plots** to verify stationarity after transformation
+- If ACF decays slowly, the series may still be non-stationary
+- Multiple differences may be needed: see [ARIMA models](arima_models.qmd)
+:::
+
+## Connection to Other Topics
+
+- [Box-Cox Transformations](transformations.qmd) - For variance stabilization
+- [ARIMA Models](arima_models.qmd) - Integrated models using differencing
+- [ACF and PACF](acf_pacf.qmd) - Diagnostic tools for stationarity
+
+## Key Takeaways
+
+1. Trend stationarity assumes $x_t = \mu_t + y_t$ where $y_t$ is stationary
+2. Differencing operator: $\nabla = 1 - B$ removes polynomial trends
+3. Check ACF after detrending to verify stationarity
+4. First differencing is equivalent to $d=1$ in ARIMA$(p,d,q)$
