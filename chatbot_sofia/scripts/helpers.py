@@ -55,7 +55,7 @@ def llm_chat(prompt, model_url, model_name):
     return response
 
 def retrieve_collection_name(collections, chunk_method, embedding_model):
-    ''' Retrieve the exact Weaviate collection name if it matches the chunk method and the embedding model '''
+    ''' Retrieve the exact Qdrant collection name if it matches the chunk method and the embedding model '''
 
     # Large chunks respond to collections that contain "complete_question", small to custom
     chunk_criteria = "complete_question" if chunk_method == "Large" else "custom"
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     OLLAMA_URL = os.getenv("OLLAMA_URL")
-    MODEL = "llama3.1:8b"
+    MODEL = os.getenv("MODEL")
 
     if not OLLAMA_URL:
         raise RuntimeError("OLLAMA_URL not set")

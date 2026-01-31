@@ -50,7 +50,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
-SITE_DIR = PROJECT_ROOT / "site" / "data-products-use-cases"
+SITE_DIR = PROJECT_ROOT / "site"
 
 def load_qmd_files():
     files = []

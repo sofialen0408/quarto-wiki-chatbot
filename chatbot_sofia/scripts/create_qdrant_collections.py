@@ -1,18 +1,18 @@
 import os
-import re
 from dotenv import load_dotenv
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
+from constants import client, collection_name
 from helpers import get_chunks_fixed_size_with_overlap, stable_int_id
 from qmd_extraction import load_qmd_files
 
 load_dotenv()
 
 QDRANT_URL = os.getenv("QDRANT_URL")
-#QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")  # optional
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")  # optional
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 
 if not QDRANT_URL:
@@ -20,6 +20,7 @@ if not QDRANT_URL:
 if not EMBEDDING_MODEL:
     raise RuntimeError("EMBEDDING_MODEL is not set in .env")
 
+#Set chunking parameters
 CHUNK_SIZE = 300
 CHUNK_OVERLAP = 0.1
 
@@ -40,17 +41,9 @@ for data in load_qmd_files():
 
 print(f"Built {len(quarto_docs)} chunks")
 
-# Qdrant client
-client = QdrantClient(url=QDRANT_URL)
-
 # Embedder
 embedding_model = SentenceTransformer(f"sentence-transformers/{EMBEDDING_MODEL}")
 dim = embedding_model.get_sentence_embedding_dimension()
-
-# Safe collection name
-model_safe = re.sub(r"[^\w]+", "_", EMBEDDING_MODEL)
-chunking_method = "custom_overlap_automated"
-collection_name = f"QUARTO_Embedding_{model_safe}_Chunking_{chunking_method}"
 
 # Create collection if missing
 existing = {c.name for c in client.get_collections().collections}
@@ -101,4 +94,4 @@ for start in tqdm(range(0, len(quarto_docs), ENCODE_BATCH), desc="Embedding & Up
 if points:
     client.upsert(collection_name=collection_name, points=points)
 
-print("Completed embedding and upserting to Qdrant")
+print("✅ Completed embedding and upserting to Qdrant")

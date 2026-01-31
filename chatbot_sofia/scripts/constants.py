@@ -7,26 +7,20 @@ import os
 
 load_dotenv()  # reads .env automatically
 
+# Environment variables
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 QDRANT_URL = os.getenv("QDRANT_URL")
-#QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-
-## MODEL INFO ##
-llms = [
-    'llama3.2:3b-instruct-q4_K_M',
-    'llama3.3:70b-instruct-q4_K_M',
-    'llama3.2-vision:11b-instruct-q4_K_M'
-]
-
-embedding_models = [
-    'mxbai-embed-large:latest'
-]
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 
 # Ollama client connection
 ollama_client = Client(OLLAMA_URL)
 
-# Set up Qdrant connection
-client = QdrantClient(url=QDRANT_URL) #api_key=qdrant_api_key)
+# Set up Qdrant connection & collection name
+client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+
+model_safe = re.sub(r"[^\w]+", "_", EMBEDDING_MODEL)
+collection_name = f"QUARTO_Embedding_{model_safe}"
 
 # Readiness + list collections
 try:
@@ -35,5 +29,3 @@ try:
     print("Collections:", [c.name for c in collections.collections])
 except Exception as e:
     raise Exception(f"❌ Failed to connect to Qdrant: {e}")
-# finally:
-#     client.close()
