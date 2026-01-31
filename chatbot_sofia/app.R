@@ -4,7 +4,7 @@ library(reticulate)
 library(shinyjs)
 
 # Python back-end script
-source_python("test_chat_integrate.py") #"chatbot_for_integration.py"
+source_python("chatbot_for_integration.py")
 
 # Custom theme with your color palette
 custom_theme <- bs_theme(

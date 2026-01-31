@@ -14,3 +14,4 @@ renv.lock
 .DS_Store
 /site/.DS_Store
 /*/.DS_Store
+**/*.quarto_ipynb

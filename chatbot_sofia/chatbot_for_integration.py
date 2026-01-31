@@ -1,10 +1,17 @@
 import scripts.helpers as h
 import scripts.constants as c
-from weaviate.classes.query import MetadataQuery
 import pandas as pd
 import duckdb
 from datetime import datetime
+from qdrant_client import models
+from sentence_transformers import SentenceTransformer, util
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+MODEL = os.getenv("MODEL")
 
 DUCKDB_PATH = "feedback.duckdb"
 TABLE_NAME = "feedback"
@@ -124,12 +131,11 @@ def find_similar_query(user_input, feedback_df, similarity_threshold=0.7):
     Compare the user's input with past queries and return a past response
     if similarity is above a threshold.
     """
-    from sentence_transformers import SentenceTransformer, util # type: ignore
 
     if feedback_df is None or feedback_df.empty:
         return user_input, None, None  # No past queries to compare
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer(f"sentence-transformers/{EMBEDDING_MODEL}")
 
     # Extract all past queries as a flat list
     past_queries = []
@@ -176,15 +182,14 @@ def find_similar_query(user_input, feedback_df, similarity_threshold=0.7):
     
     return user_input, None, None
 
-# Connect to Weaviate Client
+# Connect to Qdrant Client
 client = c.client
-client.connect()
 
 # replace with target collection name 
-COLLECTION_NAME = "QUARTO_Embedding_mxbai_embed_large_latest_Chunking_custom_overlap_automated" 
+COLLECTION_NAME = c.collection_name
 
 # Chatbot Query Function
-def query_weaviate(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
+def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     """
     Perform hybrid query in Weaviate and return documents while considering past feedback.
     """
@@ -199,40 +204,74 @@ def query_weaviate(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     
     # If past response exists but feedback was LOW, adjust retrieval
     modify_retrieval = past_response is not None and past_score < 1
+    limit = 5 if modify_retrieval else 3
 
-    # Hybrid Querying
-    collection = client.collections.get(COLLECTION_NAME)
-    response = collection.query.hybrid(
-            query=text_input,
-            limit= 5 if modify_retrieval else 3,
-            alpha= 0.3 if modify_retrieval else 0.5, 
-            return_metadata=MetadataQuery(score=True, explain_score=True),
-            target_vector="content_vector"  # chunk content stored in "content_vector"
-        )
+    model_name = f"sentence-transformers/{EMBEDDING_MODEL}"
 
-    # Filter relevant documents by score
+    result = client.query_points(
+        collection_name=COLLECTION_NAME,
+        query=models.Document(text=text_input, model=model_name), limit=limit
+        ).points
+
+    #Filter relevant documents by score
     relative_score = 0.5  # replace with desired threshold
     max_score = response.objects[0].metadata.score
 
-    returned_docs = ""
-    returned_chunks = ""
+    returned_docs = []
+    returned_chunks = []
 
-    print("This is how many objects were pulled: " + str(len(response.objects)))
-    
-    for o in response.objects:
+    for o in result:
+        returned_docs.append(o.payload.get("source", ""))
+        returned_chunks.append(o.payload.get("content", ""))
 
-        # Return document title and chunk content
-        returned_document = o.properties["source"]
-        returned_chunk = o.properties["content"]  
+    # Optional: de-duplicate sources
+    returned_docs_unique = []
+    seen = set()
+    for s in returned_docs:
+        if s and s not in seen:
+            seen.add(s)
+            returned_docs_unique.append(s)
 
-        # Filter relevant documents by score
-        if o.metadata.score >= relative_score * max_score:
-            returned_docs = returned_document + "; \n\n" + returned_docs
-            returned_chunks = returned_chunk + "\n\n" + returned_chunks
-    
-    # Format the prompt
-    combined_prompt = h.create_prompt(text_input, returned_chunks, returned_docs)
+    docs_text = ";\n".join(returned_docs_unique)
+    chunks_text = "\n\n---\n\n".join([c for c in returned_chunks if c])
 
-    # Generate the LLM response
-    response = h.llm_generate(prompt=combined_prompt, client=c.ollama_client, model='llama3.3:70b-instruct-q4_K_M')
+    combined_prompt = h.create_prompt(text_input, chunks_text, docs_text)
+
+    response = h.llm_generate(
+        prompt=combined_prompt,
+        client=c.ollama_client,
+        model=MODEL
+    )
+
     return(query, response)
+
+if __name__ == "__main__":
+    user_input = "How can I use data products to improve decision-making in my organization?"
+    user_input, response = query_qdrant(user_input)
+    print("User Input:", user_input)
+    print("Final Response:", response)
+
+
+    # return response
+    # returned_docs = ""
+    # returned_chunks = ""
+
+    # print(f"This is how many objects were pulled: {len(result)}")
+    
+    # for o in result:
+    #     print(f"Source: {o.payload['source']}, Score: {o.score}")
+    #     # Return document title and chunk content
+    #     returned_document = o.payload['source']
+    #     returned_chunk = o.payload['content']
+
+    #     # # Filter relevant documents by score
+    #     # if o.metadata.score >= relative_score * max_score:
+    #     #     returned_docs = returned_document + "; \n\n" + returned_docs
+    #     #     returned_chunks = returned_chunk + "\n\n" + returned_chunks
+    
+    # #Format the prompt
+    # combined_prompt = h.create_prompt(text_input, returned_chunks, returned_docs)
+
+    # # Generate the LLM response
+    # response = h.llm_generate(prompt=combined_prompt, client=c.ollama_client, model='llama3.3:70b-instruct-q4_K_M')
+    # return(query, response)

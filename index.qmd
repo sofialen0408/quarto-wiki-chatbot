@@ -52,11 +52,7 @@ Welcome to the Team Wiki!
 ::: grid
 :::
 
-
-
-
-
-::::::: alt-background
+::::::::::::::::::: alt-background
 :::::: content-block
 ::: section-h1
 Data Products & Use Cases
@@ -241,8 +237,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 ::: grid
 :::
-::::::: alt-background
 
+::::::: alt-background
 :::::: content-block
 ::: section-h1
 Technology & Analytics References
@@ -352,3 +348,4 @@ Use our LLM-assisted search tool for quick answers!
 ```
 :::
 ::::
+:::::::::::::::::::
