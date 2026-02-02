@@ -96,12 +96,12 @@ if __name__ == "__main__":
     load_dotenv()
 
     OLLAMA_URL = os.getenv("OLLAMA_URL")
-    MODEL = os.getenv("MODEL")
+    MODEL_ID = os.getenv("MODEL_ID")
 
     if not OLLAMA_URL:
         raise RuntimeError("OLLAMA_URL not set")
 
-    resp = llm_chat("Say 'pong' and nothing else.", OLLAMA_URL, MODEL)
+    resp = llm_chat("Say 'pong' and nothing else.", OLLAMA_URL, MODEL_ID)
 
     # Ollama chat responses usually look like: resp["message"]["content"]
     content = resp.get("message", {}).get("content", "")
