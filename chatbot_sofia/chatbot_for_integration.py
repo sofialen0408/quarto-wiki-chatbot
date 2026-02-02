@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-MODEL = os.getenv("MODEL")
+MODEL_ID = os.getenv("MODEL_ID")
 
 DUCKDB_PATH = "feedback.duckdb"
 TABLE_NAME = "feedback"
@@ -214,8 +214,8 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
         ).points
 
     #Filter relevant documents by score
-    relative_score = 0.5  # replace with desired threshold
-    max_score = response.objects[0].metadata.score
+    # relative_score = 0.5  # replace with desired threshold
+    # max_score = response.objects[0].metadata.score
 
     returned_docs = []
     returned_chunks = []
@@ -240,7 +240,7 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     response = h.llm_generate(
         prompt=combined_prompt,
         client=c.ollama_client,
-        model=MODEL
+        model=MODEL_ID
     )
 
     return(query, response)

@@ -79,7 +79,9 @@ dependencies = [
     "watchdog (>=6.0.0)",
     "weaviate-client (>=4.11.0)",
     "qdrant-client[fastembed] (>=1.16.2,<2.0.0)",
-    "python-dotenv (>=1.2.1,<2.0.0)"
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "boto3 (>=1.42.39,<2.0.0)",
+    "openai (>=2.16.0,<3.0.0)"
 ]
 
 
