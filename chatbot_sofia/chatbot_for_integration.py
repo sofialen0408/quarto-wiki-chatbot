@@ -183,7 +183,7 @@ def find_similar_query(user_input, feedback_df, similarity_threshold=0.7):
     return user_input, None, None
 
 # Connect to Qdrant Client
-client = c.client
+client = c.db_client
 
 # replace with target collection name 
 COLLECTION_NAME = c.collection_name
@@ -239,17 +239,17 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
 
     response = h.llm_generate(
         prompt=combined_prompt,
-        client=c.ollama_client,
+        client=c.llm_client,
         model=MODEL_ID
     )
 
     return(query, response)
 
-if __name__ == "__main__":
-    user_input = "How can I use data products to improve decision-making in my organization?"
-    user_input, response = query_qdrant(user_input)
-    print("User Input:", user_input)
-    print("Final Response:", response)
+# if __name__ == "__main__":
+#     user_input = "How can I use data products to improve decision-making in my organization?"
+#     user_input, response = query_qdrant(user_input)
+#     print("User Input:", user_input)
+#     print("Final Response:", response)
 
 
     # return response

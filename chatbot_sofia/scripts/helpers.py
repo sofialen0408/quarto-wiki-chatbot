@@ -4,16 +4,32 @@ from ollama import Client
 from typing import List
 import re
 import hashlib
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
 
-def llm_generate(prompt, client, model):
+load_dotenv()
 
-    response = client.generate(
-        model=model,
-        prompt=prompt,
-        # system="Keep responses brief"
-    )
+MODEL_ID = os.getenv("MODEL_ID")
 
-    return response['response']
+def llm_generate(prompt, client, model, client_type="openai"):
+    if client_type == "openai":
+        completion = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response = completion.choices[0].message.content
+        return response
+    elif client_type == "ollama":
+        response = client.generate(
+            model=model,
+            prompt=prompt,
+            # system="Keep responses brief"
+        )['response']
+        return response
+    else:
+        raise Exception("Client Type Does Not Exist")
+
 
 def create_prompt(question, retrieved_chunk, document):
     ''' Helper function to assemble system prompt, the user question, retrieved relevant chunk(s), and the document of origin into a prompt to send to the LLM '''
@@ -88,30 +104,6 @@ def get_chunks_fixed_size_with_overlap(text: str, chunk_size: int, overlap_fract
 def stable_int_id(s: str) -> int:
     # stable across runs/machines
     return int(hashlib.md5(s.encode("utf-8")).hexdigest()[:16], 16)
-
-if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    OLLAMA_URL = os.getenv("OLLAMA_URL")
-    MODEL_ID = os.getenv("MODEL_ID")
-
-    if not OLLAMA_URL:
-        raise RuntimeError("OLLAMA_URL not set")
-
-    resp = llm_chat("Say 'pong' and nothing else.", OLLAMA_URL, MODEL_ID)
-
-    # Ollama chat responses usually look like: resp["message"]["content"]
-    content = resp.get("message", {}).get("content", "")
-    print("Chat content:", repr(content))
-
-    if "pong" not in content.lower():
-        raise RuntimeError("LLM chat test failed: did not get pong")
-
-    print("✅ llm_chat() works")
-
  
 # def clean_string(text):
 #     ''' clean document names so we can assess similarity to expected document tag'''
