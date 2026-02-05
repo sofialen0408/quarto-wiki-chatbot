@@ -191,7 +191,7 @@ COLLECTION_NAME = c.collection_name
 # Chatbot Query Function
 def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     """
-    Perform hybrid query in Weaviate and return documents while considering past feedback.
+    Perform query in Qdrant and return documents while considering past feedback.
     """
     initialize_feedback_db()
     feedback_df = load_past_feedback_duckdb()  # Load feedback history
