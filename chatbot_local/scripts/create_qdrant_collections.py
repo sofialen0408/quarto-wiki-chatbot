@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
-from constants import client, collection_name
+from constants import db_client, collection_name
 from helpers import get_chunks_fixed_size_with_overlap, stable_int_id
 from qmd_extraction import load_qmd_files
 
@@ -46,10 +46,10 @@ embedding_model = SentenceTransformer(f"sentence-transformers/{EMBEDDING_MODEL}"
 dim = embedding_model.get_sentence_embedding_dimension()
 
 # Create collection if missing
-existing = {c.name for c in client.get_collections().collections}
+existing = {c.name for c in db_client.get_collections().collections}
 if collection_name not in existing:
     print(f"== Creating Collection {collection_name} ==")
-    client.create_collection(
+    db_client.create_collection(
         collection_name=collection_name,
         vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
     )
@@ -88,10 +88,10 @@ for start in tqdm(range(0, len(quarto_docs), ENCODE_BATCH), desc="Embedding & Up
         )
 
     if len(points) >= UPSERT_BATCH:
-        client.upsert(collection_name=collection_name, points=points)
+        db_client.upsert(collection_name=collection_name, points=points)
         points = []
 
 if points:
-    client.upsert(collection_name=collection_name, points=points)
+    db_client.upsert(collection_name=collection_name, points=points)
 
 print("✅ Completed embedding and upserting to Qdrant")

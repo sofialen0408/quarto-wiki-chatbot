@@ -9,7 +9,7 @@ from openai import OpenAI
 load_dotenv()  # reads .env automatically
 
 # Environment variables
-#OLLAMA_URL = os.getenv("OLLAMA_URL")
+OLLAMA_URL = os.getenv("OLLAMA_URL")
 
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
@@ -18,12 +18,17 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 MODEL_ID = os.getenv("MODEL_ID")
 
-# Ollama client connection
-#ollama_client = Client(OLLAMA_URL)
-
-# OpenAI client connection
-REGION = "us-east-1"
-llm_client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+if OLLAMA_URL:
+    # Ollama client connection
+    llm_client = Client(OLLAMA_URL)
+    client_type = "ollama"
+    print("✅ Ollama Client Connected")
+else:
+    # OpenAI client connection
+    REGION = "us-east-1"
+    llm_client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+    client_type = "openai"
+    print("✅ OpenAI Client Connected")
 
 # Set up Qdrant connection & collection name
 db_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)

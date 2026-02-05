@@ -236,20 +236,21 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     chunks_text = "\n\n---\n\n".join([c for c in returned_chunks if c])
 
     combined_prompt = h.create_prompt(text_input, chunks_text, docs_text)
-
+    
     response = h.llm_generate(
-        prompt=combined_prompt,
-        client=c.llm_client,
-        model=MODEL_ID
-    )
+            prompt=combined_prompt,
+            client=c.llm_client,
+            model=MODEL_ID,
+            client_type=c.client_type
+            )
 
-    return(query, response)
+    return(query,response)
 
-# if __name__ == "__main__":
-#     user_input = "How can I use data products to improve decision-making in my organization?"
-#     user_input, response = query_qdrant(user_input)
-#     print("User Input:", user_input)
-#     print("Final Response:", response)
+if __name__ == "__main__":
+    user_input = "How can I use data products to improve decision-making in my organization?"
+    user_input, response = query_qdrant(user_input)
+    print("User Input:", user_input)
+    print("Final Response:", response)
 
 
     # return response
