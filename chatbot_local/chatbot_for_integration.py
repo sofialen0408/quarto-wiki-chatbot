@@ -246,11 +246,11 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
 
     return(query,response)
 
-if __name__ == "__main__":
-    user_input = "How can I use data products to improve decision-making in my organization?"
-    user_input, response = query_qdrant(user_input)
-    print("User Input:", user_input)
-    print("Final Response:", response)
+# if __name__ == "__main__":
+#     user_input = "How can I use data products to improve decision-making in my organization?"
+#     user_input, response = query_qdrant(user_input)
+#     print("User Input:", user_input)
+#     print("Final Response:", response)
 
 
     # return response
