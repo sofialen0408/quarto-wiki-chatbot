@@ -29,7 +29,7 @@ ui <- page_sidebar(
     
     card(
       card_header("Chatbot Info", style = "background-color: #004aab; color: white;"),
-      p("This chatbot connects with knowledge base documents vectorized and stored in Weaviate."), 
+      p("This chatbot connects with knowledge base documents vectorized and stored in Qdrant."), 
       p("Ask all knowledge base related questions here!")
     ),
     
