@@ -12,7 +12,7 @@
     - Note: Leave blank the env variables you don't use
 
 ### Create Qdrant Collection
-Create a Qdrant collection based on the .qmd files in the `site` folder
+Create a Qdrant collection from the .qmd files in the `site` folder
 - In terminal, cd `scripts` and `poetry run python create_qdrant_collections.py`
 
 ## Run the Chatbot App
