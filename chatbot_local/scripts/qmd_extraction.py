@@ -3,10 +3,10 @@ import requests
 import base64
 
 # ==== CONFIGURATION ====
-GITHUB_API = "https://developer.nasa.gov/api/v3"
-ORG = "ochco"
-REPO = "pa-knowledge-base"
-PAT = "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" 
+GITHUB_API = os.getenv("GITHUB_API")
+ORG = os.getenv("ORG")
+REPO = os.getenv("REPO")
+PAT = os.getenv("PAT")
 
 HEADERS = {
     "Authorization": f"token {PAT}",
@@ -21,7 +21,7 @@ def get_repo_tree(branch):
 
 
 def get_qmd_files_from_github():
-    branch = "development"
+    branch = "development"  # Or "main" if that's your default branch
     print(f"Accessing branch: {branch}...")
     
     tree = get_repo_tree(branch)

@@ -5,6 +5,7 @@ import pandas as pd
 import duckdb
 from datetime import datetime
 import os
+from fastembed import TextEmbedding
 
 DUCKDB_PATH = "feedback.duckdb"
 TABLE_NAME = "feedback"
@@ -130,6 +131,7 @@ def find_similar_query(user_input, feedback_df, similarity_threshold=0.7):
         return user_input, None, None  # No past queries to compare
 
     model = SentenceTransformer("all-MiniLM-L6-v2")
+    #model = TextEmbedding(model_name="all_MiniLM-L6-v2")
 
     # Extract all past queries as a flat list
     past_queries = []
@@ -155,10 +157,20 @@ def find_similar_query(user_input, feedback_df, similarity_threshold=0.7):
     # Compute similarity scores
     input_embedding = model.encode(user_input, convert_to_tensor=True)
     past_embeddings = model.encode(past_queries, convert_to_tensor=True)
+    # input_embedding = list(model.embed([user_input]))[0]
+    # past_embeddings = list(model.embed(past_queries))
     
     similarities = util.pytorch_cos_sim(input_embedding, past_embeddings)[0]
     print(f"Similarity scores: {similarities.tolist()}")
     best_match_idx = similarities.argmax().item()
+    # import numpy as np
+    # from numpy.linalg import norm
+    
+    # similarities = [
+    #     np.dot(input_embedding, past_emb) / (norm(input_embedding) * norm(past_emb))
+    #     for past_emb in past_embeddings
+    # ]
+    # best_match_idx = np.argmax(similarities)
 
     # If similarity is high, return past response and feedback score
     # Store responses with their feedback scores if similarity is above threshold
