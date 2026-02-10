@@ -4,32 +4,53 @@
       <button id="close-chatbot" class="close-button">&times;</button>
     </div>
     <div class="chatbot-body">
-      <iframe id="chatbot-iframe" src="http://127.0.0.1:5075/" frameborder="0"></iframe>
+        <iframe id="chatbot-iframe" frameborder="0"></iframe>
     </div>
   </div>
-  
+
   <button id="chatbot-toggle" class="chatbot-toggle-button">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
   </button>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const chatbotToggle = document.getElementById('chatbot-toggle');
-      const chatbotContainer = document.getElementById('chatbot-container');
-      const closeButton = document.getElementById('close-chatbot');
-      
-      // Toggle chatbot visibility
-      chatbotToggle.addEventListener('click', function() {
-        chatbotContainer.classList.toggle('visible');
-        chatbotToggle.classList.toggle('hidden');
-      });
-      
-      // Close chatbot
-      closeButton.addEventListener('click', function() {
-        chatbotContainer.classList.remove('visible');
-        chatbotToggle.classList.remove('hidden');
-      });
-    });
-  </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const chatbotToggle   = document.getElementById('chatbot-toggle');
+  const chatbotContainer = document.getElementById('chatbot-container');
+  const closeButton     = document.getElementById('close-chatbot');
+  const iframe          = document.getElementById('chatbot-iframe');
+
+  let sid = sessionStorage.getItem('chat_sid');
+  if (!sid) {
+    sid = (crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now()) + Math.random());
+    sessionStorage.setItem('chat_sid', sid);
+  }
+
+  iframe.src = `http://127.0.0.1:5075/?sid=${encodeURIComponent(sid)}`;
+
+  const isOpen = sessionStorage.getItem('chatbotOpen') === 'true';
+
+  if (isOpen) {
+    chatbotContainer.classList.add('visible');
+    chatbotToggle.classList.add('hidden');
+  }
+
+  chatbotToggle.addEventListener('click', function () {
+    chatbotContainer.classList.add('visible');
+    chatbotToggle.classList.add('hidden');
+    sessionStorage.setItem('chatbotOpen', 'true');
+  });
+
+  closeButton.addEventListener('click', function () {
+    chatbotContainer.classList.remove('visible');
+    chatbotToggle.classList.remove('hidden');
+    sessionStorage.setItem('chatbotOpen', 'false');
+  });
+
+});
+</script>

@@ -19,6 +19,23 @@ custom_theme <- bs_theme(
   base_font = font_google("Source Sans Pro")
 )
 
+CHAT_STORE <- new.env(parent = emptyenv())
+
+get_history <- function(sid) {
+  if (exists(sid, envir = CHAT_STORE, inherits = FALSE)) {
+    get(sid, envir = CHAT_STORE, inherits = FALSE)
+  } else {
+    list(list(
+      sender = "bot",
+      message = "Hello! I'm your chatbot assistant. How can I help you today?"
+    ))
+  }
+}
+
+set_history <- function(sid, hist) {
+  assign(sid, hist, envir = CHAT_STORE)
+}
+
 ui <- page_sidebar(
   
   theme = custom_theme,
@@ -93,8 +110,37 @@ ui <- tagList(
 
 server <- function(input, output, session) {
 
-  chatHistory <- reactiveVal(list(list(sender = "bot", 
-                  message = "Hello! I'm your chatbot assistant. How can I help you today?")))
+  sid <- reactive({
+    qs <- shiny::parseQueryString(session$clientData$url_search)
+    if (!is.null(qs$sid) && nzchar(qs$sid)) qs$sid else session$token
+  })
+
+  sid_value <- reactiveVal(NULL)
+  observeEvent(sid(), { sid_value(sid()) }, once = TRUE)
+
+  chatHistory <- reactiveVal()
+
+  observeEvent(sid(), {
+    chatHistory(get_history(sid()))
+  }, once = TRUE)
+
+  # Save to store whenever chatHistory changes (after it's initialized)
+  observeEvent(chatHistory(), {
+    req(sid())
+    req(!is.null(chatHistory()))
+    set_history(sid(), chatHistory())
+  })
+
+  session$onSessionEnded(function() {
+    s <- sid_value()
+    if (is.null(s) || !nzchar(s)) return()
+
+    existed <- exists(s, envir = CHAT_STORE, inherits = FALSE)
+    if (existed) rm(list = s, envir = CHAT_STORE)
+
+    cat(sprintf("\n[cleanup] sid=%s removed=%s | remaining=%d\n",
+                s, existed, length(ls(envir = CHAT_STORE))))
+  })
   
   feedbackNeeded <- reactiveVal(FALSE)  # Initially, feedback is not needed
   base_query <- reactiveVal("")

@@ -222,8 +222,10 @@ h1.title {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 350px;
-  height: 500px;
+
+  width: min(90vw, 500px);
+  height: min(80vh, 550px);
+
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
@@ -231,6 +233,7 @@ h1.title {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
   opacity: 0;
   transform: translateY(20px);
   pointer-events: none;
