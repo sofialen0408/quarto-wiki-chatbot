@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-renv.lock
 
 /.quarto/
 /_site/
