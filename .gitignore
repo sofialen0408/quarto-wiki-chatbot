@@ -1,4 +1,3 @@
-.Rproj.user
 .Rhistory
 .RData
 .Ruserdata
@@ -14,3 +13,32 @@
 /site/.DS_Store
 /*/.DS_Store
 **/*.quarto_ipynb
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+ 
+# Poetry
+poetry.lock.bak
+ 
+# R / renv
+.Rproj.user/
+renv/library/
+renv/python/
+renv/staging/
+ 
+# Environment / secrets
+.env
+chatbot_local/.env
+!.env.example
+!chatbot_local/.env.example
+ 
+# Qdrant local data (if not using Docker volume)
+chatbot_local/scripts/qdrant_storage/
+qdrant_storage/
+ 
+# OS
+.DS_Store
