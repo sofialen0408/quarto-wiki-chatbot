@@ -41,4 +41,6 @@
 -   Make sure to commit your changes to the development branch, with a decently descriptive commit message. If you have left your edits hanging open for a while, it's possible other team members have edited the same content over the same period of time, and you may have to resolve merge conflicts.
     -   After you commit to the development branch, changes will be merged into the main branch after being tested & approved, and Github Actions will facilitate the auto-publishing of the website from here!
 
+Or from terminal `quarto preview` (`make run` before running site)
+
 See our [Contribution Guide in the Knowledge Base Site](https://dev.ochco-connect.ochco.nasa.gov/pa-knowledge-base/site/employee-resources/contributing-quarto/contribution-guide.html) for more information on how to contribute!!

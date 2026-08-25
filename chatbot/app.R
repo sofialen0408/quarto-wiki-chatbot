@@ -19,6 +19,23 @@ custom_theme <- bs_theme(
   base_font = font_google("Source Sans Pro")
 )
 
+CHAT_STORE <- new.env(parent = emptyenv())
+
+get_history <- function(sid) {
+  if (exists(sid, envir = CHAT_STORE, inherits = FALSE)) {
+    get(sid, envir = CHAT_STORE, inherits = FALSE)
+  } else {
+    list(list(
+      sender = "bot",
+      message = "Hello! I'm your chatbot assistant. How can I help you today?"
+    ))
+  }
+}
+
+set_history <- function(sid, hist) {
+  assign(sid, hist, envir = CHAT_STORE)
+}
+
 ui <- page_sidebar(
   
   theme = custom_theme,
@@ -29,7 +46,7 @@ ui <- page_sidebar(
     
     card(
       card_header("Chatbot Info", style = "background-color: #004aab; color: white;"),
-      p("This chatbot connects with knowledge base documents vectorized and stored in Weaviate."), 
+      p("This chatbot connects with knowledge base documents vectorized and stored in Qdrant."), 
       p("Ask all knowledge base related questions here!")
     ),
     
@@ -93,8 +110,37 @@ ui <- tagList(
 
 server <- function(input, output, session) {
 
-  chatHistory <- reactiveVal(list(list(sender = "bot", 
-                  message = "Hello! I'm your chatbot assistant. How can I help you today?")))
+  sid <- reactive({
+    qs <- shiny::parseQueryString(session$clientData$url_search)
+    if (!is.null(qs$sid) && nzchar(qs$sid)) qs$sid else session$token
+  })
+
+  sid_value <- reactiveVal(NULL)
+  observeEvent(sid(), { sid_value(sid()) }, once = TRUE)
+
+  chatHistory <- reactiveVal()
+
+  observeEvent(sid(), {
+    chatHistory(get_history(sid()))
+  }, once = TRUE)
+
+  # Save to store whenever chatHistory changes (after it's initialized)
+  observeEvent(chatHistory(), {
+    req(sid())
+    req(!is.null(chatHistory()))
+    set_history(sid(), chatHistory())
+  })
+
+  session$onSessionEnded(function() {
+    s <- sid_value()
+    if (is.null(s) || !nzchar(s)) return()
+
+    existed <- exists(s, envir = CHAT_STORE, inherits = FALSE)
+    if (existed) rm(list = s, envir = CHAT_STORE)
+
+    cat(sprintf("\n[cleanup] sid=%s removed=%s | remaining=%d\n",
+                s, existed, length(ls(envir = CHAT_STORE))))
+  })
   
   feedbackNeeded <- reactiveVal(FALSE)  # Initially, feedback is not needed
   base_query <- reactiveVal("")
@@ -184,7 +230,7 @@ server <- function(input, output, session) {
     current_chat[[length(current_chat) + 1]] <- list(sender = "user", message = msg)
     chatHistory(current_chat)
     
-    query_result <- py$query_weaviate(msg)
+    query_result <- py$query_qdrant(msg)
 
     base_query(query_result[[1]])
     bot_response <- query_result[[2]]
@@ -227,5 +273,5 @@ server <- function(input, output, session) {
 
 }
 
-options(shiny.host = "0.0.0.0", shiny.port = 5075)
+options(shiny.host = "127.0.0.1", shiny.port = 5075)
 shinyApp(ui = ui, server = server)

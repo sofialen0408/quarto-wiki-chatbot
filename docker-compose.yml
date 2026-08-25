@@ -8,7 +8,7 @@ services:
       - "6333:6333"   # REST API
       - "6334:6334"   # gRPC
     env_file:
-      - chatbot_local/.env
+      - chatbot/.env
     environment:
       # Qdrant reads its API key from this exact var name.
       # Set QDRANT_API_KEY in your .env — the same value your app already uses to connect.

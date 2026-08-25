@@ -3,10 +3,10 @@ import requests
 import base64
 
 # ==== CONFIGURATION ====
-GITHUB_API = "https://developer.nasa.gov/api/v3"
-ORG = "ochco"
-REPO = "pa-knowledge-base"
-PAT = "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" 
+GITHUB_API = os.getenv("GITHUB_API")
+ORG = os.getenv("ORG")
+REPO = os.getenv("REPO")
+PAT = os.getenv("PAT")
 
 HEADERS = {
     "Authorization": f"token {PAT}",
@@ -21,7 +21,7 @@ def get_repo_tree(branch):
 
 
 def get_qmd_files_from_github():
-    branch = "development"
+    branch = "development"  # Or "main" if that's your default branch
     print(f"Accessing branch: {branch}...")
     
     tree = get_repo_tree(branch)
@@ -45,3 +45,27 @@ def get_qmd_files_from_github():
             print(f"❌ Skipped {path} | Status: {file_resp.status_code} | URL: {file_url}")
 
     return result
+
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
+SITE_DIR = PROJECT_ROOT / "site"
+
+def load_qmd_files():
+    files = []
+
+    for path in SITE_DIR.rglob("*.qmd"):
+        try:
+            content = path.read_text(encoding="utf-8")
+            files.append({
+                "path": str(path.relative_to(PROJECT_ROOT)),
+                "content": content
+            })
+        except Exception as e:
+            print(f"Failed to read {path}: {e}")
+    return files
+
+if __name__ == "__main__":
+    qmd_files = load_qmd_files()
+    print(f"Loaded {len(qmd_files)} .qmd files from local site directory.")

@@ -3,16 +3,33 @@
 from ollama import Client
 from typing import List
 import re
+import hashlib
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
 
-def llm_generate(prompt, client, model):
+load_dotenv()
 
-    response = client.generate(
-        model=model,
-        prompt=prompt,
-        # system="Keep responses brief"
-    )
+MODEL_ID = os.getenv("MODEL_ID")
 
-    return response['response']
+def llm_generate(prompt, client, model, client_type="openai"):
+    if client_type == "openai":
+        completion = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response = completion.choices[0].message.content
+        return response
+    elif client_type == "ollama":
+        response = client.generate(
+            model=model,
+            prompt=prompt,
+            # system="Keep responses brief"
+        )['response']
+        return response
+    else:
+        raise Exception("Client Type Does Not Exist")
+
 
 def create_prompt(question, retrieved_chunk, document):
     ''' Helper function to assemble system prompt, the user question, retrieved relevant chunk(s), and the document of origin into a prompt to send to the LLM '''
@@ -54,7 +71,7 @@ def llm_chat(prompt, model_url, model_name):
     return response
 
 def retrieve_collection_name(collections, chunk_method, embedding_model):
-    ''' Retrieve the exact Weaviate collection name if it matches the chunk method and the embedding model '''
+    ''' Retrieve the exact Qdrant collection name if it matches the chunk method and the embedding model '''
 
     # Large chunks respond to collections that contain "complete_question", small to custom
     chunk_criteria = "complete_question" if chunk_method == "Large" else "custom"
@@ -82,6 +99,11 @@ def get_chunks_fixed_size_with_overlap(text: str, chunk_size: int, overlap_fract
         chunk = " ".join(chunk_words)
         chunks.append(chunk)
     return chunks
+
+
+def stable_int_id(s: str) -> int:
+    # stable across runs/machines
+    return int(hashlib.md5(s.encode("utf-8")).hexdigest()[:16], 16)
  
 # def clean_string(text):
 #     ''' clean document names so we can assess similarity to expected document tag'''

@@ -1,44 +1,45 @@
 # Constants.py
-# Storing variables and datasets
 import re
 from ollama import Client
-import weaviate
+from qdrant_client import QdrantClient
+from dotenv import load_dotenv
+import os
+from openai import OpenAI
 
-## MODEL INFO ##
-llms = [
-    'llama3.2:3b-instruct-q4_K_M', 
-    'llama3.3:70b-instruct-q4_K_M', 
-    'llama3.2-vision:11b-instruct-q4_K_M'
-]
+load_dotenv()  # reads .env automatically
 
-embedding_models = [
-    'mxbai-embed-large:latest'
-]
+# Environment variables
+OLLAMA_URL = os.getenv("OLLAMA_URL")
 
-formatted_embedding_models = [re.sub(r'[^\w\s]', '_', embed) for embed in embedding_models]
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+MODEL_ID = os.getenv("MODEL_ID")
 
-## DEFINE WEAVIATE SERVER ATTRIBUTES ##
-# hostname = "172.18.0.2" # Docker IPAddress attribute
-# port = 8080 # Default for Weaviate, listed in Verba deployment
-hostname = "131.110.210.165" # Server IP
-port = 80 # Normal HTTP port
-
-## DEFINE OLLAMA ATTRIBUTES ##
-ollama_url = "http://131.110.210.167:443"
-ollama_client = Client(ollama_url)
-
-# Set up Weaviate connections
-client = weaviate.connect_to_local(
-    host=hostname,
-    port=port,
-    grpc_port=50051,
-    )
-
-if client.is_ready():
-    print("✅ Successfully connected to Weaviate!")
+if OLLAMA_URL:
+    # Ollama client connection
+    llm_client = Client(OLLAMA_URL)
+    client_type = "ollama"
+    print("✅ Ollama Client Connected")
 else:
-    raise Exception("❌ Failed to connect to Weaviate!")
+    # OpenAI client connection
+    REGION = "us-east-1"
+    llm_client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+    client_type = "openai"
+    print("✅ OpenAI Client Connected")
 
-collections = client.collections.list_all()
+# Set up Qdrant connection & collection name
+db_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
-client.close()
+model_safe = re.sub(r"[^\w]+", "_", EMBEDDING_MODEL)
+collection_name = f"QUARTO_Embedding_{model_safe}"
+
+# Readiness + list collections
+try:
+    collections = db_client.get_collections()
+    print("✅ Successfully connected to Qdrant!")
+    print("Collections:", [c.name for c in collections.collections])
+except Exception as e:
+    raise Exception(f"❌ Failed to connect to Qdrant: {e}")
