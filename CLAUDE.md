@@ -30,6 +30,9 @@ The Weaviate → Qdrant migration is complete in code — no `.py` file referenc
    - R Shiny app (`chatbot/app.R`), served on port 5075
    - Embedded into the Quarto site via iframe (`chatbot-toggle.html`)
    - **Session persistence**: `chatbot-toggle.html` mints a `sid` UUID in `sessionStorage` and appends it as `?sid=` on the iframe URL. `app.R` keys an in-memory environment `CHAT_STORE` by that `sid`; the `chatHistory` `reactiveVal` loads from / writes back to `CHAT_STORE[[sid]]` on every change, and a session-end handler deletes the entry. History survives Quarto page navigation in the same browser tab, but not an app restart.
+   - **Send flow (`sendMessage()`)**: adds the user message plus a placeholder bot message (`pending = TRUE`, rendered as the `.chat-typing` three-dot bubble) and flushes right away, then runs the blocking `py$query_qdrant()` in a `shinyjs::delay()` so the typing indicator shows first; the placeholder is swapped for the real reply when it returns. Send is disabled meanwhile.
+   - **Scroll behaviour**: no auto-scroll on a new answer or a rating click; on Send, a one-shot script pins the just-sent question near the top. Scroll position is saved to `sessionStorage` and restored on load (bottom if none), so it survives a Quarto tab switch (which reloads the iframe).
+   - **Dark-mode persistence**: `PREFS_STORE` — an in-memory env keyed by `sid` like `CHAT_STORE` — remembers the dark-mode toggle and re-applies it on load, so it survives a tab switch. Not cleared on session end.
    - **Inline feedback**: each bot reply in `output$chatMessages` renders 👍/😐/👎 buttons that fire a single `Shiny.setInputValue('rate', {idx, value})`. `observeEvent(input$rate)` stamps the rating onto the message in `chatHistory()` and calls `py$save_feedback_to_duckdb(...)`. Rating is optional — it does not gate asking the next question.
 
 ### Data Flow
