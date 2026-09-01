@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Quarto-based knowledge base website (PA Knowledge Base) with an integrated RAG (Retrieval Augmented Generation) chatbot. The chatbot uses vector search over `.qmd` documentation files to provide contextual answers, and learns from user feedback over time.
 
-**Current branch**: `qdrant-migration` — migrating the chatbot's vector store from Weaviate to Qdrant. The `chatbot/` folder is the current (Qdrant-based) implementation; older code/deps reference Weaviate but that path is being phased out (`weaviate-client` still lingers in `pyproject.toml`).
+The Weaviate → Qdrant migration is complete in code — no `.py` file references Weaviate anymore; only the unused `weaviate-client` dependency lingers in `chatbot/pyproject.toml`. Recent feature branches (`3-correct-chatbot-window`, `4-correct-sending-chats`) are UI/behaviour fixes to the Shiny chatbot.
+
+**Two READMEs are stale**: `README.md` and `chatbot/README.md` still tell you to work under a `chatbot_local/` folder and copy `chatbot_local/.env` — that folder was renamed to `chatbot/` (commit "single chatbot folder"). Trust the `Makefile` and this file for paths, not the READMEs.
 
 ## Architecture
 
@@ -27,7 +29,8 @@ This is a Quarto-based knowledge base website (PA Knowledge Base) with an integr
 3. **Chatbot UI**
    - R Shiny app (`chatbot/app.R`), served on port 5075
    - Embedded into the Quarto site via iframe (`chatbot-toggle.html`)
-   - Chat session persists across page navigation using browser `sessionStorage`, backed by R Shiny's reactive `CHAT_STORE`
+   - **Session persistence**: `chatbot-toggle.html` mints a `sid` UUID in `sessionStorage` and appends it as `?sid=` on the iframe URL. `app.R` keys an in-memory environment `CHAT_STORE` by that `sid`; the `chatHistory` `reactiveVal` loads from / writes back to `CHAT_STORE[[sid]]` on every change, and a session-end handler deletes the entry. History survives Quarto page navigation in the same browser tab, but not an app restart.
+   - **Inline feedback**: each bot reply in `output$chatMessages` renders 👍/😐/👎 buttons that fire a single `Shiny.setInputValue('rate', {idx, value})`. `observeEvent(input$rate)` stamps the rating onto the message in `chatHistory()` and calls `py$save_feedback_to_duckdb(...)`. Rating is optional — it does not gate asking the next question.
 
 ### Data Flow
 
@@ -60,7 +63,9 @@ make clean         # Stop Qdrant; leaves R/Poetry environments intact
 cd chatbot && poetry run python scripts/test_bedrock.py   # AWS Bedrock specifically
 ```
 
-Note: `pyproject.toml` lives in `chatbot/` and is shared by `chatbot/` and `chatbot/scripts/` — there is no separate `pyproject.toml` under `scripts/`, so Python scripts there are run via `cd chatbot && poetry run python scripts/<script>.py`.
+Note: `pyproject.toml` lives in `chatbot/` and is shared by `chatbot/` and `chatbot/scripts/` — there is no separate `pyproject.toml` under `scripts/`. **Always run from `chatbot/`, never from `chatbot/scripts/`.** The two Python entry points use different import styles, each depending on that CWD:
+- `chatbot_for_integration.py` (loaded by `app.R` via `source_python`) uses `import scripts.constants as c` — needs CWD `chatbot/`.
+- `scripts/*.py` use bare `import constants` / `import helpers`, which only resolve when run as `python scripts/<x>.py` from `chatbot/` (Python puts `scripts/` on `sys.path[0]`).
 
 ## Key Implementation Details
 
@@ -73,10 +78,15 @@ Note: `pyproject.toml` lives in `chatbot/` and is shared by `chatbot/` and `chat
 ### Feedback-Driven Query Optimization
 
 `chatbot/chatbot_for_integration.py`:
-- `find_similar_query` embeds the incoming question and compares it (cosine similarity, threshold 0.7) against all past queries in `feedback.duckdb`
-- If a similar past query's best-rated response has `avg_rating >= 1.5`, that response is returned immediately with no LLM call
-- If the best match has `avg_rating < 1`, retrieval is widened: `limit` goes from 3 to 5 documents before querying Qdrant
-- `save_feedback_to_duckdb` merges new ratings into the existing row for a given response (running average, deduplicated query history) rather than inserting a new row per rating
+- `find_similar_query` embeds the incoming question and compares it (cosine similarity, threshold 0.7) against all past queries in `feedback.duckdb`, then picks the **best-rated** response among matches
+- If that response has `avg_rating >= 1.5`, it is returned immediately with no LLM call
+- If it has `avg_rating < 1`, retrieval is widened: `limit` goes from 3 to 5 documents before querying Qdrant (still a fresh LLM call)
+- `save_feedback_to_duckdb(base, query, response, rating)` — `rating` is `2` (helpful) / `1` (okay) / `0` (not helpful). Matches an existing row by **substring match of `base` against `query_history` AND exact `response` text**, then recomputes a running `avg_rating` over `num_ratings`; otherwise inserts a new row. DB file is `chatbot/feedback.duckdb` (`DUCKDB_PATH`), gitignored via `chatbot/.gitignore`.
+
+### Feedback Gotchas
+
+- `save_feedback_to_duckdb` wraps its whole body in `try/except Exception: print(...)` and never re-raises, so a failed write is **invisible to the R side** — the UI still shows "thanks for the feedback".
+- Its row match uses pandas `.str.contains(base)` with the default `regex=True`. Once the table has rows, a question containing regex metacharacters can throw internally (swallowed by the `except`) and the rating is silently dropped. The fix is `regex=False`.
 
 ### LLM Client Abstraction
 
@@ -127,8 +137,6 @@ site/                                # Quarto content (.qmd files), rendered to 
 
 ## Branch Strategy
 
-- `main`: production-ready code
-- `development`: active development
-- `qdrant-migration`: current work (Weaviate → Qdrant transition)
-
-Merging `development` → `main` triggers GitHub Actions for auto-publishing.
+- `main`: production-ready code; merging `development` → `main` triggers the GitHub Actions auto-publish
+- `development`: integration branch contributors branch from and merge back into (per `README.md`)
+- Feature branches: named `<issue#>-<slug>` (e.g. `3-correct-chatbot-window`)
