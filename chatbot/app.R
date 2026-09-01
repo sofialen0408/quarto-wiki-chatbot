@@ -40,6 +40,23 @@ set_history <- function(sid, hist) {
   assign(sid, hist, envir = CHAT_STORE)
 }
 
+# Per-tab UI preferences (currently just dark mode), keyed by the same sid as
+# CHAT_STORE. Like the chat history, this lives only for the life of the R
+# process but survives a Quarto page switch (which reloads the iframe).
+PREFS_STORE <- new.env(parent = emptyenv())
+
+get_prefs <- function(sid) {
+  if (nzchar(sid) && exists(sid, envir = PREFS_STORE, inherits = FALSE)) {
+    get(sid, envir = PREFS_STORE, inherits = FALSE)
+  } else {
+    list(dark_mode = FALSE)
+  }
+}
+
+set_prefs <- function(sid, prefs) {
+  if (nzchar(sid)) assign(sid, prefs, envir = PREFS_STORE)
+}
+
 ui <- page_fluid(
 
   theme = custom_theme,
@@ -235,7 +252,48 @@ ui <- tagList(
         margin: 2px 0 12px 4px;
         font-size: 0.78rem;
       }
-    "))
+
+      /* Typing indicator (three bouncing dots) shown inside a bot bubble
+         while the LLM is still working. */
+      .chat-typing {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 0;
+      }
+      .chat-typing > span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0.5;
+        animation: chat-typing-bounce 1.2s ease-in-out infinite;
+      }
+      .chat-typing > span:nth-child(2) { animation-delay: 0.2s; }
+      .chat-typing > span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes chat-typing-bounce {
+        0%, 80%, 100% { transform: translateY(0);    opacity: 0.5; }
+        40%           { transform: translateY(-5px); opacity: 1;   }
+      }
+    ")),
+    # Persist the chat scroll position per browser tab. A Quarto page switch
+    # reloads this iframe from scratch, which would otherwise reset the chat
+    # to the top; instead we save scrollTop on every scroll and restore it
+    # once the messages have rendered (see output$chatMessages).
+    tags$script(HTML(
+      "(function(){
+         var KEY = 'chatScrollTop';
+         (function bind(){
+           var c = document.getElementById('chat-container');
+           if (!c) { setTimeout(bind, 100); return; }
+           if (c.dataset.scrollBound) return;
+           c.dataset.scrollBound = '1';
+           c.addEventListener('scroll', function(){
+             try { sessionStorage.setItem(KEY, String(c.scrollTop)); } catch (e) {}
+           });
+         })();
+       })();"
+    ))
   ),
   ui
 )
@@ -262,6 +320,11 @@ server <- function(input, output, session) {
     req(!is.null(chatHistory()))
     set_history(sid(), chatHistory())
   })
+
+  # True until the first non-empty render. A Quarto tab switch reloads the
+  # iframe -> new session -> this resets, so on the first render we restore
+  # the saved scroll position (falling back to the bottom) exactly once.
+  first_render_done <- FALSE
 
   session$onSessionEnded(function() {
     s <- sid_value()
@@ -292,6 +355,23 @@ server <- function(input, output, session) {
   # Custom light mode theme
   light_theme <- custom_theme
 
+  # Restore the saved dark-mode choice once, before we start persisting
+  # changes, so a Quarto tab switch keeps whatever the reader had set.
+  prefs_loaded <- FALSE
+  observeEvent(sid(), {
+    if (isTRUE(get_prefs(sid())$dark_mode)) {
+      shinyWidgets::updateSwitchInput(session, "darkMode", value = TRUE)
+      session$setCurrentTheme(dark_theme)  # apply now, don't wait for the round-trip
+    }
+    prefs_loaded <<- TRUE
+  }, once = TRUE)
+
+  observeEvent(input$darkMode, {
+    if (!prefs_loaded) return()
+    req(sid())
+    set_prefs(sid(), list(dark_mode = isTRUE(input$darkMode)))
+  }, ignoreNULL = FALSE)
+
   observe({
     if (isTRUE(input$darkMode)) {
       session$setCurrentTheme(dark_theme)
@@ -302,14 +382,38 @@ server <- function(input, output, session) {
 
   output$chatMessages <- renderUI({
     messages <- chatHistory()
+    is_user <- vapply(messages, function(m) identical(m$sender, "user"), logical(1))
+    last_user <- if (any(is_user)) max(which(is_user)) else NA_integer_
     message_elements <- lapply(seq_along(messages), function(i) {
       msg <- messages[[i]]
       if (identical(msg$sender, "user")) {
         div(
           class = "d-flex justify-content-end mb-2",
+          id = if (!is.na(last_user) && i == last_user) "last-user-msg" else NULL,
           div(class = "rounded px-3 py-2",
               style = "background-color: #F8B092; color: black; max-width: 75%;",
               p(msg$message))
+        )
+      } else if (isTRUE(msg$pending)) {
+        div(
+          class = "d-flex justify-content-start mb-2",
+          div(class = "rounded px-3 py-2",
+              style = "background-color: #3a76d8;",
+              div(class = "chat-typing",
+                  tags$span(), tags$span(), tags$span())),
+          # Runs once, when this placeholder is inserted (i.e. right after
+          # the user hits Send). Brings the just-sent question to the top of
+          # the window. Nothing scrolls when the answer or a rating renders.
+          tags$script(HTML(
+            "(function(){
+               var c = document.getElementById('chat-container');
+               var u = document.getElementById('last-user-msg');
+               if (c && u) {
+                 c.scrollTop += u.getBoundingClientRect().top
+                                - c.getBoundingClientRect().top - 8;
+               }
+             })();"
+          ))
         )
       } else {
         bubble <- div(
@@ -355,12 +459,25 @@ server <- function(input, output, session) {
         tagList(bubble, rating_row)
       }
     })
-    tagList(
-      do.call(tagList, message_elements),
-      tags$script(HTML(
-        "(function(){var c=document.getElementById('chat-container');if(c){c.scrollTop=c.scrollHeight;}})();"
+
+    # No auto-scroll on send/answer/rating — the container keeps whatever
+    # position the reader left it at. On the first render after a (re)load,
+    # restore the scroll position saved for this tab (bottom if none saved).
+    initial_scroll <- NULL
+    if (!first_render_done && length(messages) > 0) {
+      first_render_done <<- TRUE
+      initial_scroll <- tags$script(HTML(
+        "(function(){
+           var c = document.getElementById('chat-container');
+           if (!c) return;
+           var v = null;
+           try { v = sessionStorage.getItem('chatScrollTop'); } catch (e) {}
+           c.scrollTop = (v !== null && !isNaN(+v)) ? +v : c.scrollHeight;
+         })();"
       ))
-    )
+    }
+
+    tagList(do.call(tagList, message_elements), initial_scroll)
   })
 
   # Inline thumbs-up / thumbs-down under a bot reply. One shared input carries
@@ -415,30 +532,38 @@ server <- function(input, output, session) {
       return()
     }
 
+    # Paint the user's bubble and the typing indicator immediately. The
+    # blocking Python call is deferred to the next cycle (via shinyjs::delay)
+    # so Shiny flushes this UI to the browser first instead of holding it
+    # until query_qdrant() returns.
     current_chat <- chatHistory()
     current_chat[[length(current_chat) + 1]] <- list(sender = "user", message = msg)
+    current_chat[[length(current_chat) + 1]] <- list(sender = "bot", pending = TRUE)
     chatHistory(current_chat)
 
-    query_result <- py$query_qdrant(msg)
+    updateTextInput(session, "userMessage", value = "")
+    shinyjs::disable("sendMessage")
 
-    base_query(query_result[[1]])
-    bot_response <- query_result[[2]]
+    shinyjs::delay(50, {
+      query_result <- tryCatch(
+        py$query_qdrant(msg),
+        error = function(e) list(NA, paste("Sorry, something went wrong:", conditionMessage(e)))
+      )
+      base_query(query_result[[1]])
 
-    shinyjs::delay(500, {
       current_chat <- chatHistory()
-      current_chat[[length(current_chat) + 1]] <- list(
+      # Replace the trailing pending placeholder with the real reply.
+      current_chat[[length(current_chat)]] <- list(
         sender = "bot",
-        message = bot_response,
+        message = query_result[[2]],
         rateable = TRUE,
         query = base_query(),
         user_msg = msg
       )
       chatHistory(current_chat)
 
-      runjs("document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;")
+      shinyjs::enable("sendMessage")
     })
-
-    updateTextInput(session, "userMessage", value = "")
   }
 
 }
