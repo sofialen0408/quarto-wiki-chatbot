@@ -223,8 +223,8 @@ h1.title {
   bottom: 20px;
   right: 20px;
 
-  width: min(90vw, 500px);
-  height: min(80vh, 550px);
+  width: min(90vw, 510px);
+  height: min(75vh, 600px);
 
   background-color: white;
   border-radius: 10px;
@@ -275,12 +275,18 @@ h1.title {
 .chatbot-body {
   flex: 1;
   overflow: hidden;
+  /* Gap between the "Chatbot" banner and the "Chat Window" header inside
+     the iframe, and below the input bar. */
+  padding-top: 10px;
+  padding-bottom: 28px;
+  background-color: white;
 }
 
 #chatbot-iframe {
   width: 100%;
   height: 100%;
   border: none;
+  display: block;
 }
 
 /* Mobile responsive adjustments */

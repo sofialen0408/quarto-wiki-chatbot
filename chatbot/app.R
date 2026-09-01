@@ -27,7 +27,11 @@ get_history <- function(sid) {
   } else {
     list(list(
       sender = "bot",
-      message = "Hello! I'm your chatbot assistant. How can I help you today?"
+      message = paste(
+        "Hi! I'm your Knowledge Base assistant. I answer questions from the",
+        "PA Knowledge Base docs, which are vectorized and stored in Qdrant.",
+        "Ask me anything knowledge-base related!"
+      )
     ))
   }
 }
@@ -36,59 +40,72 @@ set_history <- function(sid, hist) {
   assign(sid, hist, envir = CHAT_STORE)
 }
 
-ui <- page_sidebar(
-  
+ui <- page_fluid(
+
   theme = custom_theme,
-  
-  sidebar = sidebar(
-    width = 300,
-    title = "Settings",
-    
-    card(
-      card_header("Chatbot Info", style = "background-color: #004aab; color: white;"),
-      p("This chatbot connects with knowledge base documents vectorized and stored in Qdrant."), 
-      p("Ask all knowledge base related questions here!")
-    ),
-    
-    hr(),
-    
-    card(
-      card_header("Options", style = "background-color: #004aab; color: white;"),
-      shinyWidgets::switchInput("darkMode", "Dark Mode", value = FALSE, 
-                               onLabel = "ON", offLabel = "OFF",
-                               onStatus = "#1d6522", offStatus = "#3a76d8")
-    )
-  ),
-  
+
   card(
-    card_header("Chat Window", style = "background-color: #004aab; color: white;"),
-    div(
-      id = "chat-container",
-      style = "height: 400px; overflow-y: auto; padding: 15px; 
-                margin-bottom: 15px; border: 1px solid #F8B092; 
-                border-radius: 5px;",
-      uiOutput("chatMessages")
-    ),
-    card_footer(
-      div(
-        class = "d-flex",
-        textInput("userMessage", "Type a message", placeholder = "Type your message here...", 
-                    width = "100%"),
-        actionButton("sendMessage", "Send", class = "btn ml-2",
-                     style = "background-color: #F16125; color: white;")
+    card_header(
+      class = "d-flex justify-content-between align-items-center",
+      style = "background-color: #004aab; color: white;",
+      "Chat Window",
+      tags$div(
+        class = "dropdown",
+        tags$button(
+          class = "btn btn-sm text-white border-0 p-0 lh-1",
+          style = "background: none; font-size: 1.2rem;",
+          `data-bs-toggle` = "dropdown",
+          `data-bs-auto-close` = "outside",
+          `aria-expanded` = "false",
+          `aria-label` = "Settings",
+          HTML("&#9881;")  # gear
+        ),
+        tags$div(
+          class = "dropdown-menu dropdown-menu-end shadow border-0 p-0",
+          style = "min-width: 0; width: max-content; max-width: 195px; overflow: hidden;",
+          tags$div(
+            class = "px-3 py-1 fw-semibold small",
+            style = "background-color: #004aab; color: #fff;",
+            HTML("&#9881;&#65039;&nbsp; Settings")
+          ),
+          tags$div(
+            class = "px-3 py-2",
+            tags$div(
+              class = "d-flex align-items-center justify-content-between gap-2",
+              tags$span(class = "fw-medium", HTML("&#127769;&nbsp; Dark mode")),
+              tags$span(class = "ms-2", style = "margin-right: -24px;",
+                shinyWidgets::switchInput("darkMode", label = NULL, value = FALSE,
+                                         onLabel = "ON", offLabel = "OFF", size = "small",
+                                         onStatus = "success", offStatus = "default")
+              )
+            ),
+            tags$div(class = "text-secondary small mt-1",
+                     "Use a dark color theme.")
+          )
+        )
       )
     ),
-    
-    # Feedback UI (Initially Hidden)
     div(
-      id = "feedback-section",
-      style = "display: none; margin-top: 15px;",
-      h4("Rate the last response:", style = "color: #004aab;"),
-      radioButtons("feedback", "", choices = list("👍 Good" = 2, 
-                                                      "Okay" = 1, "👎 Bad" = 0), inline = TRUE),
-      actionButton("submitFeedback", "Submit Feedback", class = "btn",
-                   style = "background-color: #1d6522; color: white;"),
-      hr()
+      id = "chat-container",
+      class = "html-fill-item",
+      style = "flex: 1 1 auto; min-height: 0; overflow-y: auto;
+                padding: 15px; border: 1px solid #F8B092; border-radius: 5px;",
+      uiOutput("chatMessages")
+    ),
+
+    card_footer(
+      div(
+        class = "d-flex align-items-center",
+        style = "width: 100%; gap: 0.5rem;",
+        div(
+          class = "flex-grow-1",
+          style = "min-width: 0;",
+          textInput("userMessage", "Type a message", placeholder = "Type your message here...",
+                    width = "100%")
+        ),
+        actionButton("sendMessage", "Send", class = "btn",
+                     style = "background-color: #F16125; color: white; flex: 0 0 auto; padding: 10px 20px; font-size: 1.05rem;")
+      )
     )
   )
 )
@@ -101,8 +118,123 @@ ui <- tagList(
       .btn-primary { background-color: #F16125 !important; border-color: #F16125 !important; }
       .btn-success { background-color: #1d6522 !important; border-color: #1d6522 !important; }
       .radio-inline input[type='radio']:checked + span { color: #004aab; font-weight: bold; }
-      /* Custom styling for the cards */
-      .card { border-color: #3a76d8 !important; }
+      /* This app is shown as the whole popup (in an iframe). Pin the chat card
+         to the full viewport so it fills edge to edge with no white margin,
+         regardless of bslib's own flex wrappers. */
+      html, body {
+        margin: 0; padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      .container-fluid {
+        position: absolute;
+        inset: 0;
+        padding: 0 !important;
+        max-width: none !important;
+      }
+      .container-fluid > .card {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      .container-fluid > .card > .card-header,
+      .container-fluid > .card > .card-footer {
+        flex: 0 0 auto;
+      }
+      /* bslib centers the card body with auto margins, which leaves white
+         above the messages and stops it filling. Pin it and let it grow. */
+      .container-fluid > .card > .card-body {
+        flex: 1 1 auto !important;
+        margin: 0 !important;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+      }
+      /* Prevent horizontal scrolling: grid/flex children default to a
+         min-width based on their unconstrained content size, which can
+         force the main panel wider than the space left by the sidebar. */
+      /* The chat area has its own scrollbar; never show one on the whole
+         iframe/page. */
+      html, body { overflow: hidden; }
+      .bslib-sidebar-layout, .bslib-sidebar-layout > .main {
+        min-width: 0;
+      }
+      #chat-container { overflow-x: hidden; }
+      #chat-container .rounded {
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      /* Hide the 'Type a message' label visually (kept for screen readers)
+         so the Send button centers against the input box itself, not the
+         label + input column together. Text is still shown via placeholder. */
+      label[for='userMessage'] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      /* Shiny wraps the input in a container with a bottom margin, which
+         makes the input column taller than the Send button and pushes the
+         button off-center. Remove it so the flex row centers them evenly. */
+      .card-footer .shiny-input-container,
+      .card-footer .form-group {
+        margin-bottom: 0;
+      }
+      /* Settings dropdown: drop the switch's default bottom margin so the
+         menu wraps tightly around the label + toggle. */
+      .dropdown-menu .shiny-input-container,
+      .dropdown-menu .form-group {
+        margin-bottom: 0;
+      }
+      .dropdown-menu .bootstrap-switch { margin: 0; }
+
+      /* Inline feedback row under a bot reply */
+      .rate-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 2px 0 12px 4px;
+        font-size: 0.8rem;
+      }
+      .rate-row .rate-label {
+        color: #6c757d;
+        margin-right: 2px;
+      }
+      .rate-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border: 1px solid #d0d5dd;
+        border-radius: 999px;
+        background: #fff;
+        color: #344054;
+        font-size: 0.78rem;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: background-color .12s ease, border-color .12s ease;
+      }
+      .rate-btn:hover { background: #f2f4f7; border-color: #98a2b3; }
+      .rate-btn.up:hover    { background: #e7f4ec; border-color: #1d6522; }
+      .rate-btn.okay:hover  { background: #fdf3e3; border-color: #F16125; }
+      .rate-btn.down:hover  { background: #fbeaea; border-color: #c0392b; }
+      .rate-done {
+        color: #6c757d;
+        margin: 2px 0 12px 4px;
+        font-size: 0.78rem;
+      }
     "))
   ),
   ui
@@ -142,7 +274,6 @@ server <- function(input, output, session) {
                 s, existed, length(ls(envir = CHAT_STORE))))
   })
   
-  feedbackNeeded <- reactiveVal(FALSE)  # Initially, feedback is not needed
   base_query <- reactiveVal("")
 
   # Custom dark mode theme
@@ -157,40 +288,104 @@ server <- function(input, output, session) {
     info = "#3a76d8",
     base_font = font_google("Source Sans Pro")
   )
-  
+
   # Custom light mode theme
   light_theme <- custom_theme
 
   observe({
-    if (input$darkMode) {
+    if (isTRUE(input$darkMode)) {
       session$setCurrentTheme(dark_theme)
     } else {
       session$setCurrentTheme(light_theme)
     }
   })
 
-  shinyjs::hide("feedback-section")
-        
   output$chatMessages <- renderUI({
     messages <- chatHistory()
-    message_elements <- lapply(messages, function(msg) {
-      if (msg$sender == "user") {
+    message_elements <- lapply(seq_along(messages), function(i) {
+      msg <- messages[[i]]
+      if (identical(msg$sender, "user")) {
         div(
           class = "d-flex justify-content-end mb-2",
-          div(class = "rounded px-3 py-2", 
-              style = "background-color: #F8B092; color: black; max-width: 75%;", 
+          div(class = "rounded px-3 py-2",
+              style = "background-color: #F8B092; color: black; max-width: 75%;",
               p(msg$message))
         )
       } else {
-        div(
-          class = "d-flex justify-content-start mb-2",
-          div(class = "rounded px-3 py-2", 
-              style = "background-color: #3a76d8; color: white; max-width: 75%;", 
+        bubble <- div(
+          class = if (isTRUE(msg$rateable)) "d-flex justify-content-start mb-1"
+                  else "d-flex justify-content-start mb-2",
+          div(class = "rounded px-3 py-2",
+              style = "background-color: #3a76d8; color: white; max-width: 75%;",
               p(msg$message))
         )
+
+        rating_row <- NULL
+        if (isTRUE(msg$rateable)) {
+          if (is.null(msg$rating)) {
+            rate_btn <- function(value, variant, glyph, text) {
+              tags$button(
+                type = "button",
+                class = paste("rate-btn", variant),
+                `aria-label` = text,
+                onclick = sprintf(
+                  "Shiny.setInputValue('rate', {idx: %d, value: %d, n: Math.random()}, {priority: 'event'})",
+                  i, value
+                ),
+                HTML(glyph), tags$span(text)
+              )
+            }
+            rating_row <- div(
+              class = "rate-row",
+              tags$span(class = "rate-label", "Was this helpful?"),
+              rate_btn(2, "up",   "&#128077;", "Yes"),
+              rate_btn(1, "okay", "&#128528;", "Okay"),
+              rate_btn(0, "down", "&#128078;", "No")
+            )
+          } else {
+            picked <- if (isTRUE(msg$rating >= 2)) "&#128077; Marked helpful"
+                      else if (isTRUE(msg$rating == 1)) "&#128528; Marked okay"
+                      else "&#128078; Marked not helpful"
+            rating_row <- div(
+              class = "rate-done",
+              HTML(paste0(picked, " &middot; Thanks for the feedback"))
+            )
+          }
+        }
+        tagList(bubble, rating_row)
       }
     })
-    do.call(tagList, message_elements)
+    tagList(
+      do.call(tagList, message_elements),
+      tags$script(HTML(
+        "(function(){var c=document.getElementById('chat-container');if(c){c.scrollTop=c.scrollHeight;}})();"
+      ))
+    )
+  })
+
+  # Inline thumbs-up / thumbs-down under a bot reply. One shared input carries
+  # the message index + rating (2 = up, 0 = down); feedback is optional.
+  observeEvent(input$rate, {
+    info <- input$rate
+    if (is.null(info$idx)) return()
+    i <- as.integer(info$idx)
+    val <- as.integer(info$value)
+    ch <- chatHistory()
+    if (i < 1 || i > length(ch)) return()
+    m <- ch[[i]]
+    if (!isTRUE(m$rateable) || !is.null(m$rating)) return()
+
+    ch[[i]]$rating <- val
+    chatHistory(ch)
+
+    q <- if (is.null(m$query)) "" else m$query
+    u <- if (is.null(m$user_msg)) "" else m$user_msg
+    tryCatch(
+      py$save_feedback_to_duckdb(q, u, m$message, val),
+      error = function(e) showNotification(
+        paste("Could not save feedback:", conditionMessage(e)), type = "error"
+      )
+    )
   })
   
   observeEvent(input$sendMessage, {
@@ -215,61 +410,36 @@ server <- function(input, output, session) {
   })
 
   sendMessage <- function() {
-    # Prevent new message if feedback is not provided
-    if (feedbackNeeded()) {
-        showNotification("Please submit feedback before asking another question.", type = "warning")
-        return()
-    }
-
     msg <- input$userMessage
     if (trimws(msg) == "") {
       return()
     }
-    
+
     current_chat <- chatHistory()
     current_chat[[length(current_chat) + 1]] <- list(sender = "user", message = msg)
     chatHistory(current_chat)
-    
+
     query_result <- py$query_qdrant(msg)
 
     base_query(query_result[[1]])
     bot_response <- query_result[[2]]
-    
+
     shinyjs::delay(500, {
       current_chat <- chatHistory()
-      current_chat[[length(current_chat) + 1]] <- list(sender = "bot", message = bot_response)
+      current_chat[[length(current_chat) + 1]] <- list(
+        sender = "bot",
+        message = bot_response,
+        rateable = TRUE,
+        query = base_query(),
+        user_msg = msg
+      )
       chatHistory(current_chat)
-      
+
       runjs("document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;")
-      shinyjs::show("feedback-section")
-      feedbackNeeded(TRUE) 
     })
-    
+
     updateTextInput(session, "userMessage", value = "")
   }
-
-    # Handle feedback submission
-    observeEvent(input$submitFeedback, {
-
-        # Prevent missing feedback submission
-        if (is.null(input$feedback)) {
-          showNotification("Please provide feedback before submitting.", type = "warning")
-          return()
-        }
-      
-        last_chat_bot <- tail(chatHistory(), 1)[[1]]
-        last_chat_user <- tail(chatHistory(), 2)[[1]]
-
-        py$save_feedback_to_duckdb(base_query(), last_chat_user$message, last_chat_bot$message, as.integer(input$feedback))
-        showNotification("Feedback submitted! Thank you!", type = "message")
-        
-        # Hide feedback UI after submission
-        shinyjs::hide("feedback-section")
-        feedbackNeeded(FALSE) 
-
-        # Reset feedback input
-        updateRadioButtons(session, "feedback", selected = character(0))
-    })
 
 }
 
