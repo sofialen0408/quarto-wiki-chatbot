@@ -18,10 +18,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  const chatbotToggle   = document.getElementById('chatbot-toggle');
+  const chatbotToggle    = document.getElementById('chatbot-toggle');
   const chatbotContainer = document.getElementById('chatbot-container');
-  const closeButton     = document.getElementById('close-chatbot');
-  const iframe          = document.getElementById('chatbot-iframe');
+  const closeButton      = document.getElementById('close-chatbot');
+  const iframe           = document.getElementById('chatbot-iframe');
 
   let sid = sessionStorage.getItem('chat_sid');
   if (!sid) {
@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
     sessionStorage.setItem('chat_sid', sid);
   }
 
-  iframe.src = `http://127.0.0.1:5075/?sid=${encodeURIComponent(sid)}`;
+  // Pass this page's origin so the chatbot can build absolute links back to
+  // the Quarto site (source citations) that break out of this iframe.
+  iframe.src = `http://127.0.0.1:5075/?sid=${encodeURIComponent(sid)}`
+    + `&origin=${encodeURIComponent(location.origin)}`;
 
   const isOpen = sessionStorage.getItem('chatbotOpen') === 'true';
 

@@ -1,10 +1,11 @@
-# helpers.py 
+# helpers.py
 # Helper functions
 from ollama import Client
 from typing import List
 import re
 import hashlib
 import os
+from urllib.parse import quote
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -31,16 +32,33 @@ def llm_generate(prompt, client, model, client_type="openai"):
         raise Exception("Client Type Does Not Exist")
 
 
-def create_prompt(question, retrieved_chunk, document):
-    ''' Helper function to assemble system prompt, the user question, retrieved relevant chunk(s), and the document of origin into a prompt to send to the LLM '''
+def format_sources_for_prompt(sources):
+    ''' Render the retrieved sources as a Markdown link list the LLM can copy
+    verbatim into its answer. `sources` is a list of {"label", "path"} dicts
+    (path = site-relative URL from the Qdrant payload). '''
+    if not sources:
+        return "(no sources)"
+    return "\n".join(f"- [{s['label']}]({s['path']})" for s in sources)
+
+
+def create_prompt(question, retrieved_chunk, sources):
+    ''' Assemble the system prompt, user question, retrieved chunk(s) and the
+    list of source links into a single prompt string for the LLM. '''
+
+    source_links = format_sources_for_prompt(sources)
 
     system_prompt = '''You a chatbot for Retrieval Augmented Generation (RAG).
-    You will receive a user query and context pieces that have a semantic similarity to that query. 
-    Please answer these user queries only with the provided context. 
+    You will receive a user query and context pieces that have a semantic similarity to that query.
+    Please answer these user queries only with the provided context.
     If the provided document contains only a YAML header, ignore.
-    Mention documents you used from the context if you use them and cite at the end of each response to reduce hallucination. 
-    If the provided documentation does not provide enough information, say so. 
-    Sometimes documents will be uncessary, so if the user asks questions about you as a chatbot specifially, answer them naturally. 
+    Cite sources INLINE, right after the specific statement they support: put the matching Markdown link from the "Sources" list in parentheses at the end of that sentence or clause, before its punctuation. Example: "Data governance defines who within an organization has authority over data assets ([Data Process and Roles](site/data-products-use-cases/data-product-management-&-governance/data-process-and-roles.html))."
+    Only the links in the "Sources" list are valid citations - they point to the knowledge base pages. Any URLs that appear inside the context text are just references within a page; do not use them as your citation. Every answer that uses the context must include at least one "Sources" citation.
+    Copy each link EXACTLY as it appears in the "Sources" list - do not change the link text or the target, and do not invent links (never write a link whose target is a plain word like "(GraphGPT)").
+    If several consecutive sentences rely on the same source, cite it once after the last of them.
+    Do NOT collect citations into a "Sources", "References" or "Citations" section at the end - every citation must sit next to the claim it supports.
+    You may use Markdown formatting: fenced code blocks with a language (```r ... ```), inline code, bullet lists, and bold.
+    If the provided documentation does not provide enough information, say so.
+    Sometimes documents will be uncessary, so if the user asks questions about you as a chatbot specifially, answer them naturally.
     If the answer requires code examples encapsulate them with ```programming-language-name ```.'''
 
     combined_prompt = f'''
@@ -51,7 +69,8 @@ def create_prompt(question, retrieved_chunk, document):
 
     Relevant Context:{retrieved_chunk}
 
-    Context Document Source: {document}
+    Sources (cite by copying these Markdown links verbatim):
+    {source_links}
     '''
 
     return combined_prompt
@@ -104,6 +123,47 @@ def get_chunks_fixed_size_with_overlap(text: str, chunk_size: int, overlap_fract
 def stable_int_id(s: str) -> int:
     # stable across runs/machines
     return int(hashlib.md5(s.encode("utf-8")).hexdigest()[:16], 16)
+
+
+# RFC 3986 sub-delims + ":"/"@" are legal unencoded in a path segment; Quarto
+# serves those folder names verbatim (e.g. ".../data-product-management-&-governance/..."),
+# so encoding "&" as %26 gives a 404. Only characters that actually break URL
+# parsing (space, "#", "?", "%") get percent-encoded.
+_PATH_SAFE = "!$&'()*+,;=:@"
+
+
+def qmd_source_to_relurl(source_path: str) -> str:
+    """Map a repo-relative .qmd path (as stored in the Qdrant `source` payload)
+    to the relative URL of its rendered page on the Quarto site.
+
+    e.g. "site/technology-analytics-references/python/python.qmd"
+      -> "site/technology-analytics-references/python/python.html"
+
+    Folders with spaces become %20 (a raw space isn't a valid href and won't
+    parse as a Markdown link), but "&" and other path-legal sub-delims are
+    left as-is to match how Quarto serves the file. The site origin is
+    prepended on the R/UI side.
+    """
+    if not source_path:
+        return ""
+    path = source_path.strip().lstrip("/")
+    if path.endswith(".qmd"):
+        path = path[:-4] + ".html"
+    return "/".join(quote(seg, safe=_PATH_SAFE) for seg in path.split("/"))
+
+
+def source_label(source_path: str) -> str:
+    """Human-readable label for a cited source path. Uses the file stem, or the
+    parent folder when the file is a section landing page (main/index)."""
+    if not source_path:
+        return ""
+    parts = source_path.strip().lstrip("/").split("/")
+    stem = parts[-1]
+    if stem.endswith(".qmd"):
+        stem = stem[:-4]
+    if stem.lower() in ("main", "index") and len(parts) >= 2:
+        stem = parts[-2]
+    return re.sub(r"[-_]+", " ", stem).strip().title()
  
 # def clean_string(text):
 #     ''' clean document names so we can assess similarity to expected document tag'''
