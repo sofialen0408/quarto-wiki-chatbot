@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import base64
 
@@ -52,6 +53,17 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 SITE_DIR = PROJECT_ROOT / "site"
 
+def extract_frontmatter_title(content: str):
+    """Return the `title:` from a .qmd YAML front matter block, or None."""
+    m = re.match(r"^﻿?---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+    if not m:
+        return None
+    tm = re.search(r"^title:\s*(.+?)\s*$", m.group(1), re.MULTILINE)
+    if not tm:
+        return None
+    return tm.group(1).strip().strip('"').strip("'") or None
+
+
 def load_qmd_files():
     files = []
 
@@ -60,7 +72,8 @@ def load_qmd_files():
             content = path.read_text(encoding="utf-8")
             files.append({
                 "path": str(path.relative_to(PROJECT_ROOT)),
-                "content": content
+                "content": content,
+                "title": extract_frontmatter_title(content),
             })
         except Exception as e:
             print(f"Failed to read {path}: {e}")

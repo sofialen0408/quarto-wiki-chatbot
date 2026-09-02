@@ -57,6 +57,99 @@ set_prefs <- function(sid, prefs) {
   if (nzchar(sid)) assign(sid, prefs, envir = PREFS_STORE)
 }
 
+# Strip the handful of markup vectors commonmark passes through from raw HTML
+# in the model's reply (defence in depth — the corpus is internal).
+sanitize_html <- function(html) {
+  html <- gsub("(?is)<\\s*(script|style|iframe|object|embed|form|meta|link)\\b.*?(</\\s*\\1\\s*>|$)",
+               "", html, perl = TRUE)
+  html <- gsub("(?i)\\son[a-z]+\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\\s>]+)", "",
+               html, perl = TRUE)
+  html <- gsub("(?i)(href|src)\\s*=\\s*(\"\\s*(javascript|vbscript|data):[^\"]*\"|'\\s*(javascript|vbscript|data):[^']*')",
+               '\\1="#"', html, perl = TRUE)
+  html
+}
+
+# Post-process commonmark's <a href="..."> tags:
+#   * every link gets target="_top" so the click escapes the chatbot iframe;
+#   * a site-relative citation path (one of `known`, or anything under site/)
+#     is resolved to an absolute URL under `origin` and marked
+#     .chat-inline-link.
+# `known` is the exact list of source paths handed to the LLM in the prompt
+# (already .html + URL-encoded at ingestion), so no cleaning is needed here.
+# Returns list(html, used = <known paths that appeared as links>).
+resolve_anchors <- function(html, known, origin) {
+  used <- character()
+  m <- gregexpr('<a href="([^"]*)">(.*?)</a>', html, perl = TRUE)[[1]]
+  if (length(m) == 1 && m[1] == -1) return(list(html = html, used = used))
+  cs <- attr(m, "capture.start")
+  cl <- attr(m, "capture.length")
+  starts <- as.integer(m)
+  lens <- attr(m, "match.length")
+  out <- ""
+  prev <- 1L
+  for (i in seq_along(starts)) {
+    st <- starts[i]
+    en <- st + lens[i] - 1L
+    href <- substr(html, cs[i, 1], cs[i, 1] + cl[i, 1] - 1L)
+    text <- substr(html, cs[i, 2], cs[i, 2] + cl[i, 2] - 1L)
+    # commonmark HTML-escapes "&" in the target; undo it so the path matches
+    # the payload URLs (which keep "&" literal, as Quarto serves it).
+    rel <- gsub("&amp;", "&", sub("^\\./", "", sub("^/", "", href)), fixed = TRUE)
+    is_site <- rel %in% known || grepl("^site/.+\\.html", rel)
+    is_ext <- grepl("^(https?:|mailto:|tel:)", href, ignore.case = TRUE)
+    if (is_site) {
+      if (rel %in% known) used <- union(used, rel)
+      abs_url <- if (nzchar(origin)) paste0(origin, "/", rel) else paste0("/", rel)
+      new_href <- gsub("&", "&amp;", abs_url, fixed = TRUE)  # valid attribute
+      rep <- sprintf(
+        '<a href="%s" target="_top" rel="noopener" class="chat-inline-link">%s</a>',
+        new_href, text)
+    } else if (is_ext || startsWith(href, "#")) {
+      rep <- sprintf('<a href="%s" target="_top" rel="noopener noreferrer">%s</a>',
+                     href, text)
+    } else {
+      # Degenerate target the model invented, e.g. [GraphGPT](GraphGPT) — keep
+      # the words, drop the broken link.
+      rep <- text
+    }
+    out <- paste0(out, substr(html, prev, st - 1L), rep)
+    prev <- en + 1L
+  }
+  list(html = paste0(out, substr(html, prev, nchar(html))), used = used)
+}
+
+# Render a bot reply as Markdown (fenced code, lists, links, bold ...). Source
+# citations are already real Markdown links (the LLM copies them verbatim from
+# the prompt, built from the Qdrant payload); here we only resolve their
+# site-relative target against `origin` and make every link escape the iframe.
+#
+# Returns list(html = <tag>, linked = <int vector of indices into `sources`
+# that were linked inline>) so the caller can drop those from the "Sources:"
+# fallback row.
+render_bot_message <- function(text, sources, origin) {
+  if (is.null(text) || length(text) != 1 || is.na(text) || !nzchar(text)) {
+    return(list(html = p(text), linked = integer()))
+  }
+
+  paths <- vapply(sources, function(s) {
+    if (is.null(s$path)) "" else s$path
+  }, character(1))
+
+  md <- gsub("\r\n", "\n", text, fixed = TRUE)
+  html <- tryCatch(
+    commonmark::markdown_html(md, hardbreaks = TRUE, extensions = TRUE),
+    error = function(err) NULL
+  )
+  if (is.null(html)) {
+    esc <- gsub("\n", "<br/>", htmltools::htmlEscape(md), fixed = TRUE)
+    return(list(html = HTML(esc), linked = integer()))
+  }
+
+  res <- resolve_anchors(sanitize_html(html), paths[nzchar(paths)], origin)
+  linked <- which(paths %in% res$used)
+  list(html = div(class = "bot-md", HTML(res$html)), linked = linked)
+}
+
 ui <- page_fluid(
 
   theme = custom_theme,
@@ -253,6 +346,109 @@ ui <- tagList(
         font-size: 0.78rem;
       }
 
+      /* Source citations under a bot reply: links back to the Quarto pages the
+         answer was retrieved from. They open in the parent tab (target=_top)
+         so they escape the chatbot iframe. */
+      .source-row {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 2px 0 10px 4px;
+        font-size: 0.8rem;
+      }
+      .source-row .source-label {
+        color: #6c757d;
+        margin-right: 2px;
+      }
+      .source-link {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        padding: 3px 10px;
+        border: 1px solid #d0d5dd;
+        border-radius: 999px;
+        background: #fff;
+        color: #004aab;
+        font-size: 0.78rem;
+        line-height: 1.2;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+        transition: background-color .12s ease, border-color .12s ease;
+      }
+      .source-link:hover {
+        background: #eef4ff;
+        border-color: #3a76d8;
+        text-decoration: underline;
+      }
+      /* Retrieved source the model also linked in the answer text. */
+      .source-link.cited {
+        background: #eef4ff;
+        border-color: #3a76d8;
+        font-weight: 600;
+      }
+
+      /* Inline source citations rendered inside the (blue) bot bubble. */
+      #chat-container .chat-inline-link {
+        color: #fff;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      #chat-container .chat-inline-link:hover { color: #ffe9df; }
+
+      /* Markdown-rendered bot reply (headings, lists, code, links). */
+      .bot-md > :first-child { margin-top: 0; }
+      .bot-md > :last-child { margin-bottom: 0; }
+      .bot-md p { margin: 0 0 8px; }
+      .bot-md ul, .bot-md ol { margin: 0 0 8px; padding-left: 20px; }
+      .bot-md li { margin: 2px 0; }
+      .bot-md h1, .bot-md h2, .bot-md h3, .bot-md h4 {
+        margin: 10px 0 6px;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .bot-md a { color: #fff; }
+      .bot-md code {
+        background: rgba(0, 0, 0, 0.22);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        word-break: normal;
+        overflow-wrap: normal;
+      }
+      .bot-md pre {
+        background: rgba(0, 0, 0, 0.28);
+        color: #f5f7fa;
+        padding: 10px 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 6px 0 10px;
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+      .bot-md pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+        white-space: pre;
+        word-break: normal;
+        overflow-wrap: normal;
+      }
+      .bot-md blockquote {
+        margin: 6px 0;
+        padding-left: 10px;
+        border-left: 3px solid rgba(255, 255, 255, 0.4);
+      }
+      .bot-md table {
+        border-collapse: collapse;
+        margin: 6px 0;
+      }
+      .bot-md th, .bot-md td {
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        padding: 3px 8px;
+      }
+
       /* Typing indicator (three bouncing dots) shown inside a bot bubble
          while the LLM is still working. */
       .chat-typing {
@@ -303,6 +499,14 @@ server <- function(input, output, session) {
   sid <- reactive({
     qs <- shiny::parseQueryString(session$clientData$url_search)
     if (!is.null(qs$sid) && nzchar(qs$sid)) qs$sid else session$token
+  })
+
+  # Origin of the Quarto page embedding this iframe (passed as ?origin= by
+  # chatbot-toggle.html). Used to turn relative source paths into absolute
+  # links back to the site. Empty when the app is opened outside the site.
+  site_origin <- reactive({
+    qs <- shiny::parseQueryString(session$clientData$url_search)
+    if (!is.null(qs$origin) && nzchar(qs$origin)) sub("/+$", "", qs$origin) else ""
   })
 
   sid_value <- reactiveVal(NULL)
@@ -416,13 +620,50 @@ server <- function(input, output, session) {
           ))
         )
       } else {
+        origin <- site_origin()
+        srcs <- if (is.null(msg$sources)) list() else msg$sources
+
+        # Bot bubble: the reply's own prose carries inline citation links
+        # (the model copies them from the prompt); render_bot_message resolves
+        # those against `origin`. `linked` = which sources got cited in text.
+        rendered <- render_bot_message(msg$message, srcs, origin)
+
+        # "Sources:" row lists the retrieved pages the answer drew on. Retrieval
+        # is already score-gated (chatbot_for_integration.py), so these are all
+        # strong matches; a weak LLM that forgets to cite the page inline still
+        # gets it listed here. Pages the model *did* link in the prose are
+        # emphasised.
+        has_row <- length(srcs) > 0
+
         bubble <- div(
-          class = if (isTRUE(msg$rateable)) "d-flex justify-content-start mb-1"
+          class = if (isTRUE(msg$rateable) || has_row)
+                    "d-flex justify-content-start mb-1"
                   else "d-flex justify-content-start mb-2",
           div(class = "rounded px-3 py-2",
               style = "background-color: #3a76d8; color: white; max-width: 75%;",
-              p(msg$message))
+              rendered$html)
         )
+
+        sources_row <- NULL
+        if (has_row) {
+          links <- lapply(seq_along(srcs), function(j) {
+            s <- srcs[[j]]
+            if (is.null(s$path) || !nzchar(s$path)) return(NULL)
+            href <- if (nzchar(origin)) paste0(origin, "/", s$path) else paste0("/", s$path)
+            label <- if (!is.null(s$label) && nzchar(s$label)) s$label else s$path
+            cls <- if (j %in% rendered$linked) "source-link cited" else "source-link"
+            tags$a(href = href, target = "_top", rel = "noopener",
+                   class = cls, label)
+          })
+          links <- Filter(Negate(is.null), links)
+          if (length(links) > 0) {
+            sources_row <- div(
+              class = "source-row",
+              tags$span(class = "source-label", "Sources:"),
+              do.call(tagList, links)
+            )
+          }
+        }
 
         rating_row <- NULL
         if (isTRUE(msg$rateable)) {
@@ -456,7 +697,7 @@ server <- function(input, output, session) {
             )
           }
         }
-        tagList(bubble, rating_row)
+        tagList(bubble, sources_row, rating_row)
       }
     })
 
@@ -505,30 +746,36 @@ server <- function(input, output, session) {
     )
   })
   
-  observeEvent(input$sendMessage, {
-    sendMessage()
-  })
-  
+  # The textInput binding debounces by 250ms, so `input$userMessage` lags the
+  # last few keystrokes. Read the live DOM value on send instead, or a fast
+  # Enter / Send click drops the tail of the message.
   js <- "
-    $(document).on('keypress', '#userMessage', function(e) {
-      if(e.which === 13) {
-        Shiny.setInputValue('enterPressed', true, {priority: 'event'});
-        e.preventDefault();
-     }
-    });
+    (function(){
+      function fireSend(){
+        var el = document.getElementById('userMessage');
+        Shiny.setInputValue('sendNow',
+          {text: el ? el.value : '', n: Math.random()}, {priority: 'event'});
+      }
+      $(document).on('keydown', '#userMessage', function(e){
+        if (e.which === 13) { e.preventDefault(); fireSend(); }
+      });
+      $(document).on('click', '#sendMessage', function(){ fireSend(); });
+    })();
 "
-  
+
   shinyjs::runjs(js)
-  
-  observeEvent(input$enterPressed, {
-    if (!is.null(input$userMessage) && trimws(input$userMessage) != "") {
-      sendMessage()
-    }
+
+  observeEvent(input$sendNow, {
+    msg <- input$sendNow$text
+    if (is.null(msg) || trimws(msg) == "") return()
+    ch <- chatHistory()
+    if (length(ch) > 0 && isTRUE(ch[[length(ch)]]$pending)) return()  # still busy
+    sendMessage(msg)
   })
 
-  sendMessage <- function() {
-    msg <- input$userMessage
-    if (trimws(msg) == "") {
+  sendMessage <- function(msg = NULL) {
+    if (is.null(msg)) msg <- input$userMessage
+    if (is.null(msg) || trimws(msg) == "") {
       return()
     }
 
@@ -545,10 +792,10 @@ server <- function(input, output, session) {
     shinyjs::disable("sendMessage")
 
     shinyjs::delay(50, {
-      query_result <- tryCatch(
-        py$query_qdrant(msg),
-        error = function(e) list(NA, paste("Sorry, something went wrong:", conditionMessage(e)))
-      )
+      err_reply <- function(e) {
+        list(NA, paste("Sorry, something went wrong:", conditionMessage(e)), list())
+      }
+      query_result <- tryCatch(py$query_qdrant(msg), error = err_reply)
       base_query(query_result[[1]])
 
       current_chat <- chatHistory()
@@ -558,7 +805,8 @@ server <- function(input, output, session) {
         message = query_result[[2]],
         rateable = TRUE,
         query = base_query(),
-        user_msg = msg
+        user_msg = msg,
+        sources = if (length(query_result) >= 3) query_result[[3]] else list()
       )
       chatHistory(current_chat)
 
