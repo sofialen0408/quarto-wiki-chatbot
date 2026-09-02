@@ -13,6 +13,13 @@ load_dotenv()
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 MODEL_ID = os.getenv("MODEL_ID")
 
+# Retrieval score gate. After Qdrant returns the top-`limit` chunks, keep only
+# those whose cosine score clears BOTH an absolute floor and a fraction of the
+# best hit's score, so weakly-related chunks never become context or citations.
+# The cosine scale depends on the embedding model, so both are tunable via .env.
+RETRIEVAL_SCORE_MIN = float(os.getenv("RETRIEVAL_SCORE_MIN", "0.25"))
+RETRIEVAL_SCORE_RATIO = float(os.getenv("RETRIEVAL_SCORE_RATIO", "0.6"))
+
 DUCKDB_PATH = "feedback.duckdb"
 TABLE_NAME = "feedback"
 
@@ -197,10 +204,11 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
     feedback_df = load_past_feedback_duckdb()  # Load feedback history
     query, past_response, past_score = find_similar_query(text_input, feedback_df) # Find similar query to avoid calling LLM
 
-    # If past response exists and feedback was HIGH, return it directly
+    # If past response exists and feedback was HIGH, return it directly.
+    # Cached responses don't retain their source list, so return no citations.
     if past_response and past_score >= 1.5:
         print("Returning past response")
-        return query, past_response
+        return query, past_response, []
     
     # If past response exists but feedback was LOW, adjust retrieval
     modify_retrieval = past_response is not None and past_score < 1
@@ -213,30 +221,44 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
         query=models.Document(text=text_input, model=model_name), limit=limit
         ).points
 
-    #Filter relevant documents by score
-    # relative_score = 0.5  # replace with desired threshold
-    # max_score = response.objects[0].metadata.score
+    # Drop weakly-related chunks: keep only those at/above both the absolute
+    # floor and a fraction of the top hit's score. An off-topic question whose
+    # best hit is still below the floor yields no context -> the LLM answers
+    # "not enough information" instead of citing an irrelevant page.
+    if result:
+        top_score = result[0].score or 0.0
+        cutoff = max(RETRIEVAL_SCORE_MIN, RETRIEVAL_SCORE_RATIO * top_score)
+        kept = [o for o in result if (o.score or 0.0) >= cutoff]
+        print(f"Retrieval: top={top_score:.3f} cutoff={cutoff:.3f} "
+              f"kept {len(kept)}/{len(result)}")
+        result = kept
 
-    returned_docs = []
+    # Each chunk's payload already carries the rendered page's URL + title
+    # (baked in at ingestion by create_qdrant_collections.py), so retrieval
+    # just consolidates a unique, ready-to-link source list -- no path
+    # cleaning here or on the R side.
     returned_chunks = []
+    sources = []
+    seen_urls = set()
 
     for o in result:
-        returned_docs.append(o.payload.get("source", ""))
-        returned_chunks.append(o.payload.get("content", ""))
+        payload = o.payload or {}
+        chunk = payload.get("content", "")
+        if chunk:
+            returned_chunks.append(chunk)
 
-    # Optional: de-duplicate sources
-    returned_docs_unique = []
-    seen = set()
-    for s in returned_docs:
-        if s and s not in seen:
-            seen.add(s)
-            returned_docs_unique.append(s)
+        url = payload.get("url", "")
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            sources.append({
+                "label": payload.get("page_title") or url,
+                "path": url,
+            })
 
-    docs_text = ";\n".join(returned_docs_unique)
-    chunks_text = "\n\n---\n\n".join([c for c in returned_chunks if c])
+    chunks_text = "\n\n---\n\n".join(returned_chunks)
 
-    combined_prompt = h.create_prompt(text_input, chunks_text, docs_text)
-    
+    combined_prompt = h.create_prompt(text_input, chunks_text, sources)
+
     response = h.llm_generate(
             prompt=combined_prompt,
             client=c.llm_client,
@@ -244,7 +266,7 @@ def query_qdrant(text_input: str, COLLECTION_NAME: str = COLLECTION_NAME):
             client_type=c.client_type
             )
 
-    return(query,response)
+    return(query, response, sources)
 
 # if __name__ == "__main__":
 #     user_input = "How can I use data products to improve decision-making in my organization?"

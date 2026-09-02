@@ -6,7 +6,12 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
 from constants import db_client, collection_name
-from helpers import get_chunks_fixed_size_with_overlap, stable_int_id
+from helpers import (
+    get_chunks_fixed_size_with_overlap,
+    stable_int_id,
+    qmd_source_to_relurl,
+    source_label,
+)
 from qmd_extraction import load_qmd_files
 
 load_dotenv()
@@ -28,14 +33,21 @@ CHUNK_OVERLAP = 0.1
 quarto_docs = []
 for data in load_qmd_files():
     path = data["path"]
-    doc_title = path.split("/")[-1]
+    file_name = path.split("/")[-1]
+    # Baked once per page so retrieval can hand the UI a ready-to-link source:
+    #   page_url   -> site-relative URL of the rendered page (.qmd -> .html)
+    #   page_title -> the page's front-matter title (slugified filename fallback)
+    page_url = qmd_source_to_relurl(path)
+    page_title = data.get("title") or source_label(path)
     chunks = get_chunks_fixed_size_with_overlap(data["content"], CHUNK_SIZE, CHUNK_OVERLAP)
 
     for i, chunk in enumerate(chunks):
         quarto_docs.append({
-            "title": f"{doc_title} - Chunk {i+1}",
+            "title": f"{file_name} - Chunk {i+1}",
             "content": chunk,
             "source": path,
+            "url": page_url,
+            "page_title": page_title,
             "chunk": i + 1,
         })
 
@@ -81,6 +93,8 @@ for start in tqdm(range(0, len(quarto_docs), ENCODE_BATCH), desc="Embedding & Up
                     "title": doc["title"],
                     "content": doc["content"],
                     "source": doc["source"],
+                    "url": doc["url"],
+                    "page_title": doc["page_title"],
                     "chunk": doc["chunk"],
                     "embedding_model": EMBEDDING_MODEL,
                 },
